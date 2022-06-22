@@ -12,11 +12,22 @@ export {
   SignedTxn,
 } from "./wallets/wallet";
 
-export enum ValidWallets {
+
+enum ValidWallets {
   WALLET_CONNECT = "wallet-connect",
   ALGO_SIGNER = "algo-signer",
   MYALGO_CONNECT = "my-algo-connect"
 }
+
+export type WalletChoice = "" | keyof typeof ValidWallets;
+
+enum ValidNetworks {
+  TEST = "TestNet",
+  MAIN = "MainNet",
+  VIGEE_DEV = "vigee-art-sandnet"
+}
+
+export type NetworkChoice = keyof typeof ValidNetworks;
 
 export const allowedWallets = {
   WALLET_CONNECT: WC,
@@ -30,28 +41,34 @@ const acctListKey = "acct-list";
 const acctPreferenceKey = "acct-preference";
 const mnemonicKey = "mnemonic";
 
+export enum WalletStorageKeys {
+  WALLET_PREFERENCE = "wallet-preference",
+  ACCOUNT_LIST = "acct-list",
+  ACCOUNT_PREFERENCE = "acct-preference"
+}
+
 export class VigeeWallet {
   wallet: Wallet;
-  wname: string;
+  walletChoice: WalletChoice;
   network: string;
   popupPermissionCallback?: PopupPermissionCallback;
 
   constructor(
     network: string,
     popupPermissionCallback?: PopupPermissionCallback,
-    walletChoice?: string
+    walletChoice?: WalletChoice
   ) {
     if (walletChoice) this.setWalletPreference(walletChoice);
 
     this.network = network;
 
-    this.wname = this.walletPreference();
+    this.walletChoice = this.walletPreference();
 
     if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback;
 
-    if (!(this.wname in allowedWallets)) return;
+    if (!(this.walletChoice in allowedWallets)) return;
 
-    this.wallet = new allowedWallets[this.wname](network);
+    this.wallet = new allowedWallets[this.walletChoice](network);
     this.wallet.permissionCallback = this.popupPermissionCallback;
     this.wallet.accounts = this.accountList();
     this.wallet.defaultAccount = this.accountIndex();
@@ -59,45 +76,6 @@ export class VigeeWallet {
 
   async connect(): Promise<boolean> {
     if (this.wallet === undefined) return false;
-
-    // switch (this.wname) {
-    //   case "insecure-wallet":
-    //     const storedMnemonic = this.mnemonic();
-
-    //     const mnemonic = storedMnemonic
-    //       ? storedMnemonic
-    //       : prompt(
-    //         "Paste your mnemonic space delimited (DO NOT USE WITH MAINNET ACCOUNTS)"
-    //       );
-
-    //     if (!mnemonic) return false;
-
-    //     if (await this.wallet.connect(mnemonic)) {
-    //       this.setMnemonic(mnemonic);
-    //       this.setAccountList(this.wallet.accounts);
-    //       this.wallet.defaultAccount = this.accountIndex();
-    //       return true;
-    //     }
-
-    //     break;
-    //   case "wallet-connect":
-    //     await this.wallet.connect((acctList) => {
-    //       this.setAccountList(acctList);
-    //       this.wallet.defaultAccount = this.accountIndex();
-    //     });
-
-    //     return true;
-
-    //   default:
-    //     if (await this.wallet.connect()) {
-    //       this.setAccountList(this.wallet.accounts);
-    //       this.wallet.defaultAccount = this.accountIndex();
-    //       return true;
-    //     }
-
-    //     break;
-    // }
-
     // Fail
     this.disconnect();
     return false;
@@ -118,37 +96,32 @@ export class VigeeWallet {
   }
 
   setAccountList(accts: string[]) {
-    sessionStorage.setItem(acctListKey, JSON.stringify(accts));
+    sessionStorage.setItem(WalletStorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
   }
+
   accountList(): string[] {
-    const accts = sessionStorage.getItem(acctListKey);
+    const accts = sessionStorage.getItem(WalletStorageKeys.ACCOUNT_LIST);
     return accts === "" || accts === null ? [] : JSON.parse(accts);
   }
 
   setAccountIndex(idx: number) {
     this.wallet.defaultAccount = idx;
-    sessionStorage.setItem(acctPreferenceKey, idx.toString());
+    sessionStorage.setItem(WalletStorageKeys.ACCOUNT_PREFERENCE, idx.toString());
   }
+
   accountIndex(): number {
-    const idx = sessionStorage.getItem(acctPreferenceKey);
+    const idx = sessionStorage.getItem(WalletStorageKeys.ACCOUNT_PREFERENCE);
     return idx === null || idx === "" ? 0 : parseInt(idx, 10);
   }
 
-  setWalletPreference(wname: string) {
-    this.wname = wname;
-    sessionStorage.setItem(walletPreferenceKey, wname);
-  }
-  walletPreference(): string {
-    const wp = sessionStorage.getItem(walletPreferenceKey);
-    return wp === null ? "" : wp;
+  setWalletPreference(walletChoice: WalletChoice) {
+    this.walletChoice = walletChoice;
+    sessionStorage.setItem(WalletStorageKeys.WALLET_PREFERENCE, walletChoice);
   }
 
-  setMnemonic(m: string) {
-    sessionStorage.setItem(mnemonicKey, m);
-  }
-  mnemonic(): string {
-    const mn = sessionStorage.getItem(mnemonicKey);
-    return mn === null ? "" : mn;
+  walletPreference(): WalletChoice {
+    const wp = sessionStorage.getItem(WalletStorageKeys.WALLET_PREFERENCE) as WalletChoice;
+    return wp === null ? "" : wp;
   }
 
   disconnect() {
