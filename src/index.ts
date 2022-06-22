@@ -120,16 +120,16 @@ export class VigeeWallet {
   }
 
   walletPreference(): WalletChoice | "" {
+    console.log(WalletStorageKeys.WALLET_PREFERENCE);
     const wp = sessionStorage.getItem(WalletStorageKeys.WALLET_PREFERENCE) as WalletChoice;
     return wp === null ? "" : wp;
   }
 
   disconnect() {
     if (this.wallet !== undefined) this.wallet.disconnect();
-    sessionStorage.setItem(walletPreferenceKey, "");
-    sessionStorage.setItem(acctPreferenceKey, "");
-    sessionStorage.setItem(acctListKey, "");
-    sessionStorage.setItem(mnemonicKey, "");
+    sessionStorage.setItem(WalletStorageKeys.ACCOUNT_LIST, "");
+    sessionStorage.setItem(WalletStorageKeys.ACCOUNT_PREFERENCE, "");
+    sessionStorage.setItem(WalletStorageKeys.WALLET_PREFERENCE, "");
   }
 
   getDefaultAccount(): string {
