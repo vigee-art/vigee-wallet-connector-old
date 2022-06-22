@@ -1,12 +1,15 @@
 {
-  "name": "vigee-wallet-connector",
-  "version": "1.7.0",
-  "description": "Session wallet to allow persisted wallet connection across multiple wallets",
+  "name": "@juweber99/vigee-wallet-connector",
+  "version": "0.0.1",
+  "description": "vigee library to allow persisted wallet connection across multiple wallets",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist/**/*"
   ],
+  "engines": {
+    "node": ">=10"
+  },
   "dependencies": {
     "@json-rpc-tools/utils": "^1.7.6",
     "@randlabs/myalgo-connect": "^1.1.0",
@@ -24,14 +27,13 @@
     "typescript": "^4.3.5"
   },
   "scripts": {
-    "build": "tsc",
-    "test": "",
-    "lint": "tslint -p tsconfig.json",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint",
-    "preversion": "npm run lint",
-    "version": "npm run format && git add -A src",
-    "postversion": "git push && git push --tags"
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
   },
   "repository": {
     "type": "git",
@@ -42,7 +44,17 @@
     "Crypto",
     "Wallet"
   ],
-  "author": "juweber99",
+  "author": "julian.weber",
+  "module": "dist/vigee-wallet-connector.esm.js",
+  "size-limit": [{
+      "path": "dist/vigee-wallet-connector.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/vigee-wallet-connector.esm.js",
+      "limit": "10 KB"
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/vigee-art/vigee-wallet-connector/issues"

@@ -51,12 +51,12 @@ class WC implements Wallet {
       this.accounts = accounts;
     });
 
-    this.connector.on("disconnect", (error, payload) => {
+    this.connector.on("disconnect", (error, _payload) => {
       if (error) throw error;
     });
 
 
-    return new Promise(resolve=>{
+    return new Promise(resolve => {
       const reconn = setInterval(() => {
         if (this.connector.connected) {
           clearInterval(reconn);
@@ -75,7 +75,7 @@ class WC implements Wallet {
     return WC.displayName();
   }
 
-  static img(inverted: boolean): string {
+  static img(_inverted: boolean): string {
     return logo;
   }
   img(inverted: boolean): string {
@@ -114,26 +114,26 @@ class WC implements Wallet {
     return result.map((element, idx) => {
       return element
         ? {
-            txID: txns[idx].txID(),
-            blob: new Uint8Array(Buffer.from(element, "base64")),
-          }
+          txID: txns[idx].txID(),
+          blob: new Uint8Array(Buffer.from(element, "base64")),
+        }
         : {
-            txID: txns[idx].txID(),
-            blob: new Uint8Array(),
-          };
+          txID: txns[idx].txID(),
+          blob: new Uint8Array(),
+        };
     });
   }
 
   async sign(txn: TransactionParams): Promise<SignedTxn> {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented." + txn);
   }
 
   async signBytes(b: Uint8Array): Promise<Uint8Array> {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented." + b);
   }
 
   async signTeal(teal: Uint8Array): Promise<Uint8Array> {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented." + teal);
   }
 }
 
