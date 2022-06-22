@@ -87,10 +87,12 @@ class MyAlgoConnectWallet implements Wallet {
 
     const s = await this.walletConn.signTransaction(unsigned);
     for (let x = 0; x < signedTxns.length; x++) {
-      if (typeof signedTxns[x] === "number") signedTxns[x] = s[signedTxns[x]];
+      if (typeof signedTxns[x] === "number") {
+        signedTxns[x] = s[signedTxns[x] as number];
+      };
     }
 
-    return signedTxns;
+    return signedTxns as SignedTxn[];
   }
 
   async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
@@ -114,12 +116,12 @@ class MyAlgoConnectWallet implements Wallet {
     b: Uint8Array,
     permissionCallback?: PermissionCallback
   ): Promise<Uint8Array> {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented." + b + permissionCallback);
   }
 
   async signTeal(
     teal: Uint8Array,
-    permissionCallback?: PermissionCallback
+    _permissionCallback?: PermissionCallback
   ): Promise<Uint8Array> {
     return await this.walletConn.signLogicSig(teal, this.getDefaultAccount());
   }
