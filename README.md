@@ -1,8 +1,5 @@
 # vigee-wallet-connector
 
-*PRs welcome*
-
-example: https://github.com/barnjamin/vigee-wallet-connector-example
 
 ```sh
 npm -i vigee-wallet-connector
