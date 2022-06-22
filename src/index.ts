@@ -1,15 +1,11 @@
+import { Transaction, TransactionSigner } from "algosdk";
 import AlgoSignerWallet from "./wallets/algosigner";
 import MyAlgoConnectWallet from "./wallets/myalgoconnect";
-import InsecureWallet from "./wallets/insecure";
+import { PermissionCallback as PopupPermissionCallback, SignedTxn, Wallet } from "./wallets/wallet";
 import WC from "./wallets/walletconnect";
-import { PermissionCallback as PopupPermissionCallback, Wallet, SignedTxn } from "./wallets/wallet";
-import { Transaction, TransactionSigner } from "algosdk";
 
 export {
-  PermissionResult,
-  PermissionCallback,
-  Wallet,
-  SignedTxn,
+  PermissionCallback, PermissionResult, SignedTxn, Wallet
 } from "./wallets/wallet";
 
 
@@ -19,7 +15,7 @@ enum ValidWallets {
   MYALGO_CONNECT = "my-algo-connect"
 }
 
-export type WalletChoice = "" | keyof typeof ValidWallets;
+export type WalletChoice = keyof typeof ValidWallets;
 
 enum ValidNetworks {
   TEST = "TestNet",
@@ -62,7 +58,7 @@ export class VigeeWallet {
 
     this.network = network;
 
-    this.walletChoice = this.walletPreference();
+    this.walletChoice = this.walletPreference() as WalletChoice;
 
     if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback;
 
@@ -86,7 +82,11 @@ export class VigeeWallet {
   }
 
   getSigner(): TransactionSigner {
-    return (txnGroup: Transaction[], indexesToSign: number[]) => {
+    return (txnGroup: Transaction[], indexesToSign?: number[]) => {
+      if (indexesToSign) {
+        txnGroup = txnGroup.filter(
+          (_txn, index) => !indexesToSign.includes(index));
+      }
       return Promise.resolve(this.signTxn(txnGroup)).then((txns) => {
         return txns.map((tx) => {
           return tx.blob;
@@ -119,7 +119,7 @@ export class VigeeWallet {
     sessionStorage.setItem(WalletStorageKeys.WALLET_PREFERENCE, walletChoice);
   }
 
-  walletPreference(): WalletChoice {
+  walletPreference(): WalletChoice | "" {
     const wp = sessionStorage.getItem(WalletStorageKeys.WALLET_PREFERENCE) as WalletChoice;
     return wp === null ? "" : wp;
   }
