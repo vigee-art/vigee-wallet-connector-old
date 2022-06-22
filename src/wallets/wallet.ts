@@ -1,4 +1,4 @@
-import {Transaction } from 'algosdk';
+import { Transaction } from 'algosdk';
 
 export interface SignedTxn {
     txID: string;
@@ -11,12 +11,12 @@ export interface SignedTxn {
 //  so `request` this should trigger a popup where the click event
 //  is passed back into the sign functions 
 export interface PermissionResult {
-    approved(): Promise<SignedTxn[]>
-    declined(): Promise<SignedTxn[]>
+    approved(): Promise<SignedTxn[]>;
+    declined(): Promise<SignedTxn[]>;
 }
 
 export interface PermissionCallback {
-    request(PermissionResult): Promise<SignedTxn[]>
+    request(permissionResult: PermissionResult): Promise<SignedTxn[]>;
 }
 
 export interface Wallet {
@@ -32,7 +32,7 @@ export interface Wallet {
     connect(settings?: any): Promise<boolean>;
     isConnected(): boolean;
 
-    disconnect()
+    disconnect(): void;
 
     getDefaultAccount(): string;
 
