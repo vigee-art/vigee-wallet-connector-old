@@ -35,17 +35,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/barnjamin/vigee-wallet-connector.git"
+    "url": "git+https://github.com/vigee-art/vigee-wallet-connector.git"
   },
   "keywords": [
     "Algorand",
     "Crypto",
     "Wallet"
   ],
-  "author": "barnjamin",
+  "author": "juweber99",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/barnjamin/vigee-wallet-connector/issues"
+    "url": "https://github.com/vigee-art/vigee-wallet-connector/issues"
   },
-  "homepage": "https://github.com/barnjamin/vigee-wallet-connector#readme"
+  "homepage": "https://github.com/vigee-art/vigee-wallet-connector#readme"
 }

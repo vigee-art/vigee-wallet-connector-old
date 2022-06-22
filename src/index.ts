@@ -2,7 +2,7 @@ import AlgoSignerWallet from "./wallets/algosigner";
 import MyAlgoConnectWallet from "./wallets/myalgoconnect";
 import InsecureWallet from "./wallets/insecure";
 import WC from "./wallets/walletconnect";
-import { PermissionCallback, Wallet, SignedTxn } from "./wallets/wallet";
+import { PermissionCallback as PopupPermissionCallback, Wallet, SignedTxn } from "./wallets/wallet";
 import { Transaction, TransactionSigner } from "algosdk";
 
 export {
@@ -12,11 +12,17 @@ export {
   SignedTxn,
 } from "./wallets/wallet";
 
+export enum ValidWallets {
+  WALLET_CONNECT = "wallet-connect",
+  ALGO_SIGNER = "algo-signer",
+  MYALGO_CONNECT = "my-algo-connect"
+}
+
 export const allowedWallets = {
-  "wallet-connect": WC,
-  "algo-signer": AlgoSignerWallet,
-  "my-algo-connect": MyAlgoConnectWallet,
-  "insecure-wallet": InsecureWallet,
+  WALLET_CONNECT: WC,
+  ALGO_SIGNER: AlgoSignerWallet,
+  MYALGO_CONNECT: MyAlgoConnectWallet,
+  // "insecure-wallet": InsecureWallet,
 };
 
 const walletPreferenceKey = "wallet-preference";
@@ -24,29 +30,29 @@ const acctListKey = "acct-list";
 const acctPreferenceKey = "acct-preference";
 const mnemonicKey = "mnemonic";
 
-export class SessionWallet {
+export class VigeeWallet {
   wallet: Wallet;
   wname: string;
   network: string;
-  permissionCallback?: PermissionCallback;
+  popupPermissionCallback?: PopupPermissionCallback;
 
   constructor(
     network: string,
-    permissionCallback?: PermissionCallback,
-    wname?: string
+    popupPermissionCallback?: PopupPermissionCallback,
+    walletChoice?: string
   ) {
-    if (wname) this.setWalletPreference(wname);
+    if (walletChoice) this.setWalletPreference(walletChoice);
 
     this.network = network;
 
     this.wname = this.walletPreference();
 
-    if (permissionCallback) this.permissionCallback = permissionCallback;
+    if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback;
 
     if (!(this.wname in allowedWallets)) return;
 
     this.wallet = new allowedWallets[this.wname](network);
-    this.wallet.permissionCallback = this.permissionCallback;
+    this.wallet.permissionCallback = this.popupPermissionCallback;
     this.wallet.accounts = this.accountList();
     this.wallet.defaultAccount = this.accountIndex();
   }
@@ -54,43 +60,43 @@ export class SessionWallet {
   async connect(): Promise<boolean> {
     if (this.wallet === undefined) return false;
 
-    switch (this.wname) {
-      case "insecure-wallet":
-        const storedMnemonic = this.mnemonic();
+    // switch (this.wname) {
+    //   case "insecure-wallet":
+    //     const storedMnemonic = this.mnemonic();
 
-        const mnemonic = storedMnemonic
-          ? storedMnemonic
-          : prompt(
-              "Paste your mnemonic space delimited (DO NOT USE WITH MAINNET ACCOUNTS)"
-            );
+    //     const mnemonic = storedMnemonic
+    //       ? storedMnemonic
+    //       : prompt(
+    //         "Paste your mnemonic space delimited (DO NOT USE WITH MAINNET ACCOUNTS)"
+    //       );
 
-        if (!mnemonic) return false;
+    //     if (!mnemonic) return false;
 
-        if (await this.wallet.connect(mnemonic)) {
-          this.setMnemonic(mnemonic);
-          this.setAccountList(this.wallet.accounts);
-          this.wallet.defaultAccount = this.accountIndex();
-          return true;
-        }
+    //     if (await this.wallet.connect(mnemonic)) {
+    //       this.setMnemonic(mnemonic);
+    //       this.setAccountList(this.wallet.accounts);
+    //       this.wallet.defaultAccount = this.accountIndex();
+    //       return true;
+    //     }
 
-        break;
-      case "wallet-connect":
-        await this.wallet.connect((acctList) => {
-          this.setAccountList(acctList);
-          this.wallet.defaultAccount = this.accountIndex();
-        });
+    //     break;
+    //   case "wallet-connect":
+    //     await this.wallet.connect((acctList) => {
+    //       this.setAccountList(acctList);
+    //       this.wallet.defaultAccount = this.accountIndex();
+    //     });
 
-        return true;
+    //     return true;
 
-      default:
-        if (await this.wallet.connect()) {
-          this.setAccountList(this.wallet.accounts);
-          this.wallet.defaultAccount = this.accountIndex();
-          return true;
-        }
+    //   default:
+    //     if (await this.wallet.connect()) {
+    //       this.setAccountList(this.wallet.accounts);
+    //       this.wallet.defaultAccount = this.accountIndex();
+    //       return true;
+    //     }
 
-        break;
-    }
+    //     break;
+    // }
 
     // Fail
     this.disconnect();
