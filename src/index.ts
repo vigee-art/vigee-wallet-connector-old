@@ -32,10 +32,6 @@ export const allowedWallets = {
   // "insecure-wallet": InsecureWallet,
 };
 
-const walletPreferenceKey = "wallet-preference";
-const acctListKey = "acct-list";
-const acctPreferenceKey = "acct-preference";
-const mnemonicKey = "mnemonic";
 
 export enum WalletStorageKeys {
   WALLET_PREFERENCE = "wallet-preference",
@@ -50,11 +46,12 @@ export class VigeeWallet {
   popupPermissionCallback?: PopupPermissionCallback;
 
   constructor(
-    network: string,
+    network: NetworkChoice,
     popupPermissionCallback?: PopupPermissionCallback,
     walletChoice?: WalletChoice
   ) {
     if (walletChoice) this.setWalletPreference(walletChoice);
+    console.log(network, popupPermissionCallback, walletChoice);
 
     this.network = network;
 
@@ -120,7 +117,6 @@ export class VigeeWallet {
   }
 
   walletPreference(): WalletChoice | "" {
-    console.log(WalletStorageKeys.WALLET_PREFERENCE);
     const wp = sessionStorage.getItem(WalletStorageKeys.WALLET_PREFERENCE) as WalletChoice;
     return wp === null ? "" : wp;
   }

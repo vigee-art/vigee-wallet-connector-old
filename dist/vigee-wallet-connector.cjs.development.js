@@ -1611,10 +1611,6 @@ var allowedWallets = {
   ALGO_SIGNER: AlgoSignerWallet,
   MYALGO_CONNECT: MyAlgoConnectWallet
 };
-var walletPreferenceKey = "wallet-preference";
-var acctListKey = "acct-list";
-var acctPreferenceKey = "acct-preference";
-var mnemonicKey = "mnemonic";
 
 (function (WalletStorageKeys) {
   WalletStorageKeys["WALLET_PREFERENCE"] = "wallet-preference";
@@ -1717,16 +1713,16 @@ var VigeeWallet = /*#__PURE__*/function () {
   };
 
   _proto.walletPreference = function walletPreference() {
+    console.log(exports.WalletStorageKeys.WALLET_PREFERENCE);
     var wp = sessionStorage.getItem(exports.WalletStorageKeys.WALLET_PREFERENCE);
     return wp === null ? "" : wp;
   };
 
   _proto.disconnect = function disconnect() {
     if (this.wallet !== undefined) this.wallet.disconnect();
-    sessionStorage.setItem(walletPreferenceKey, "");
-    sessionStorage.setItem(acctPreferenceKey, "");
-    sessionStorage.setItem(acctListKey, "");
-    sessionStorage.setItem(mnemonicKey, "");
+    sessionStorage.setItem(exports.WalletStorageKeys.ACCOUNT_LIST, "");
+    sessionStorage.setItem(exports.WalletStorageKeys.ACCOUNT_PREFERENCE, "");
+    sessionStorage.setItem(exports.WalletStorageKeys.WALLET_PREFERENCE, "");
   };
 
   _proto.getDefaultAccount = function getDefaultAccount() {

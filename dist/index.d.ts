@@ -31,7 +31,7 @@ export declare class VigeeWallet {
     walletChoice: WalletChoice;
     network: string;
     popupPermissionCallback?: PopupPermissionCallback;
-    constructor(network: string, popupPermissionCallback?: PopupPermissionCallback, walletChoice?: WalletChoice);
+    constructor(network: NetworkChoice, popupPermissionCallback?: PopupPermissionCallback, walletChoice?: WalletChoice);
     connect(): Promise<boolean>;
     connected(): boolean;
     getSigner(): TransactionSigner;
