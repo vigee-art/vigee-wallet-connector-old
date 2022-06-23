@@ -1,11 +1,11 @@
 import { Transaction, TransactionParams } from 'algosdk';
-import { PermissionCallback, SignedTxn, Wallet } from './wallet';
-declare class AlgoSignerWallet implements Wallet {
+import { IWallet, Networks, PopupPermissionCallback, SignedTxn } from '../_types';
+declare class AlgoSignerWallet implements IWallet {
     accounts: string[];
     defaultAccount: number;
-    network: string;
-    permissionCallback?: PermissionCallback;
-    constructor(network: string);
+    permissionCallback?: PopupPermissionCallback;
+    network: Networks;
+    constructor(network: Networks);
     static displayName(): string;
     displayName(): string;
     static img(inverted: boolean): string;

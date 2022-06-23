@@ -1,22 +1,23 @@
 import algosdk, { Transaction, TransactionParams } from "algosdk";
-import { PermissionCallback, SignedTxn, Wallet } from "./wallet";
 
 import WalletConnect from "@walletconnect/client";
 import WalletConnectQRCodeModal from "algorand-walletconnect-qrcode-modal";
 
 import { formatJsonRpcRequest } from "@json-rpc-tools/utils";
+import { IWallet, Networks, PopupPermissionCallback, SignedTxn } from "../_types";
 
 const logo =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDIwSDE3LjUwNDdMMTUuODY5MyAxMy45NkwxMi4zNjI1IDIwSDkuNTYzNzVMMTQuOTc1OCAxMC42NDU2TDE0LjA5OTEgNy4zODE3TDYuNzk4NzQgMjBINEwxMy4yNTYxIDRIMTUuNzE3NkwxNi43Nzk4IDcuOTg3MzhIMTkuMzA4N0wxNy41ODkgMTAuOTgyMUwyMCAyMFoiIGZpbGw9IiMyQjJCMkYiLz4KPC9zdmc+Cg==";
 
-class WC implements Wallet {
+
+class PeraWallet implements IWallet {
   accounts: string[];
   defaultAccount: number;
-  network: string;
   connector: WalletConnect;
-  permissionCallback?: PermissionCallback;
+  permissionCallback?: PopupPermissionCallback;
+  network: Networks;
 
-  constructor(network: string) {
+  constructor(network: Networks) {
     this.accounts = [];
     this.defaultAccount = 0;
     this.network = network;
@@ -30,15 +31,14 @@ class WC implements Wallet {
   async connect(cb: any): Promise<boolean> {
     // Check if connection is already established
     if (this.connector.connected) return true;
-
-    this.connector.createSession();
+    await this.connector.createSession();
 
     this.connector.on("connect", (error, payload) => {
       if (error) {
+        console.log(error);
         throw error;
       }
       const { accounts } = payload.params[0];
-      cb(accounts);
       this.accounts = accounts;
     });
 
@@ -72,14 +72,14 @@ class WC implements Wallet {
     return "Wallet Connect";
   }
   displayName(): string {
-    return WC.displayName();
+    return PeraWallet.displayName();
   }
 
   static img(_inverted: boolean): string {
     return logo;
   }
   img(inverted: boolean): string {
-    return WC.img(inverted);
+    return PeraWallet.img(inverted);
   }
 
   isConnected(): boolean {
@@ -137,4 +137,4 @@ class WC implements Wallet {
   }
 }
 
-export default WC;
+export default PeraWallet;

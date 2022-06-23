@@ -1,13 +1,13 @@
 import { Transaction, TransactionParams } from "algosdk";
-import { PermissionCallback, SignedTxn, Wallet } from "./wallet";
 import WalletConnect from "@walletconnect/client";
-declare class WC implements Wallet {
+import { IWallet, Networks, PopupPermissionCallback, SignedTxn } from "../_types";
+declare class PeraWallet implements IWallet {
     accounts: string[];
     defaultAccount: number;
-    network: string;
     connector: WalletConnect;
-    permissionCallback?: PermissionCallback;
-    constructor(network: string);
+    permissionCallback?: PopupPermissionCallback;
+    network: Networks;
+    constructor(network: Networks);
     connect(cb: any): Promise<boolean>;
     static displayName(): string;
     displayName(): string;
@@ -21,4 +21,4 @@ declare class WC implements Wallet {
     signBytes(b: Uint8Array): Promise<Uint8Array>;
     signTeal(teal: Uint8Array): Promise<Uint8Array>;
 }
-export default WC;
+export default PeraWallet;

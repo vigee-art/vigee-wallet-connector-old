@@ -1,12 +1,12 @@
-import { Transaction } from "algosdk";
-import { PermissionCallback, SignedTxn, Wallet } from "./wallet";
 import MyAlgo from "@randlabs/myalgo-connect";
-declare class MyAlgoConnectWallet implements Wallet {
+import { Transaction } from "algosdk";
+import { IWallet, Networks, PopupPermissionCallback, SignedTxn } from "../_types";
+declare class MyAlgoWallet implements IWallet {
     accounts: string[];
     defaultAccount: number;
-    network: string;
-    permissionCallback?: PermissionCallback;
+    permissionCallback?: PopupPermissionCallback;
     walletConn: MyAlgo;
+    network?: Networks;
     constructor();
     static displayName(): string;
     displayName(): string;
@@ -18,7 +18,7 @@ declare class MyAlgoConnectWallet implements Wallet {
     getDefaultAccount(): string;
     doSign(defaultAcct: string, txns: Transaction[]): Promise<SignedTxn[]>;
     signTxn(txns: Transaction[]): Promise<SignedTxn[]>;
-    signBytes(b: Uint8Array, permissionCallback?: PermissionCallback): Promise<Uint8Array>;
-    signTeal(teal: Uint8Array, _permissionCallback?: PermissionCallback): Promise<Uint8Array>;
+    signBytes(b: Uint8Array, permissionCallback?: PopupPermissionCallback): Promise<Uint8Array>;
+    signTeal(teal: Uint8Array, _permissionCallback?: PopupPermissionCallback): Promise<Uint8Array>;
 }
-export default MyAlgoConnectWallet;
+export default MyAlgoWallet;
