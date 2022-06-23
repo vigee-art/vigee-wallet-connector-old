@@ -84,43 +84,43 @@ export class DynamicWallet {
     }
 
     setAccountList(accts: string[]) {
-        sessionStorage.setItem(StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
+        localStorage.setItem(StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
     }
 
     accountList(): string[] {
-        const accts = sessionStorage.getItem(StorageKeys.ACCOUNT_LIST);
+        const accts = localStorage.getItem(StorageKeys.ACCOUNT_LIST);
         return accts === "" || accts === null ? [] : JSON.parse(accts);
     }
 
     setAccountIndex(idx: number) {
         this.wallet.defaultAccount = idx;
-        sessionStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, idx.toString());
+        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, idx.toString());
     }
 
     accountIndex(): number {
-        const idx = sessionStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE);
+        const idx = localStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE);
         return idx === null || idx === "" ? 0 : parseInt(idx, 10);
     }
 
     setWalletPreference(walletChoice: Wallets) {
-        sessionStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
+        localStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
     }
 
     walletPreference(): Wallets {
-        const wp = sessionStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets | null;
+        const wp = localStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets | null;
         return wp === null ? Wallets.PeraWallet : wp;
     }
 
     networkPreference(): Networks {
-        const wp = sessionStorage.getItem(StorageKeys.NETWORK_PREFERENCE) as Networks | null;
+        const wp = localStorage.getItem(StorageKeys.NETWORK_PREFERENCE) as Networks | null;
         return wp === null ? Networks.TestNet : wp;
     }
 
     disconnect() {
         if (this.wallet !== undefined) this.wallet.disconnect();
-        sessionStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
-        sessionStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
-        sessionStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
+        localStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
+        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
+        localStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
     }
 
     getDefaultAccount(): string {
