@@ -776,6 +776,7 @@ var runtime_1 = /*#__PURE__*/createCommonjsModule(function (module) {
 });
 
 (function (Wallets) {
+  Wallets["DISCONNECTED"] = "DC";
   Wallets["PeraWallet"] = "PeraWallet";
   Wallets["MyAlgoWallet"] = "MyAlgoWallet";
   Wallets["AlgoSignerWallet"] = "AlgoSignerWallet";
@@ -963,7 +964,9 @@ var AlgoSignerWallet = /*#__PURE__*/function () {
     return this.accounts && this.accounts.length > 0;
   };
 
-  _proto.disconnect = function disconnect() {};
+  _proto.disconnect = function disconnect() {
+    localStorage.removeItem(exports.StorageKeys.ACCOUNT_PREFERENCE);
+  };
 
   _proto.getDefaultAccount = function getDefaultAccount() {
     if (!this.isConnected()) return "";
@@ -1424,11 +1427,10 @@ var PeraWallet = /*#__PURE__*/function () {
               return _context.abrupt("return", true);
 
             case 2:
-              console.log("creating connection session");
-              _context.next = 5;
+              _context.next = 4;
               return this.connector.createSession();
 
-            case 5:
+            case 4:
               this.connector.on("connect", function (error, payload) {
                 if (error) {
                   console.log(error);
@@ -1436,8 +1438,6 @@ var PeraWallet = /*#__PURE__*/function () {
                 }
 
                 var accounts = payload.params[0].accounts;
-                cb(accounts);
-                console.log(cb(accounts));
                 _this.accounts = accounts;
               });
               this.connector.on("session_update", function (error, payload) {
@@ -1464,7 +1464,7 @@ var PeraWallet = /*#__PURE__*/function () {
                 }, 100);
               }));
 
-            case 9:
+            case 8:
             case "end":
               return _context.stop();
           }
@@ -1632,40 +1632,43 @@ var PeraWallet = /*#__PURE__*/function () {
 var WalletFactory = /*#__PURE__*/function () {
   function WalletFactory() {}
 
-  WalletFactory.createWallet = function createWallet(network, walletChoice) {
+  WalletFactory.create = function create(network, wallet) {
     var walletMap = {
       "MyAlgoWallet": MyAlgoWallet,
       "AlgoSignerWallet": AlgoSignerWallet,
       "PeraWallet": PeraWallet
     };
     console.log("Creating wallet..");
-    return new walletMap[walletChoice](network);
+    return new walletMap[wallet](network);
   };
 
   return WalletFactory;
 }();
 
-//     "PeraWallet": PeraWallet,
-//     "AlgoSignerWallet": AlgoSignerWallet,
-//     "MyAlgoWallet": MyAlgoWallet
-// };
+function isImplementedWallet(wallet) {
+  return wallet !== undefined;
+}
 
 var DynamicWallet = /*#__PURE__*/function () {
-  function DynamicWallet(network, popupPermissionCallback, walletChoice) {
+  function DynamicWallet(network, walletChoice, popupPermissionCallback) {
     if (!network && !(network in Object.keys(exports.Networks).values())) {
-      this.network = this.networkPreference();
+      this.network = this.storedNetworkPreference();
     }
 
-    this.walletChoice = this.walletPreference();
     if (network) this.network = network;
-    if (walletChoice) this.walletChoice = walletChoice;
+    if (walletChoice) this.setStoredWalletChoice(walletChoice);
+    this.walletChoice = this.storedWalletPreference();
     if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback; // this.wallet = WalletFactory.createWallet(this.network, this.walletChoice);
 
-    this.wallet = WalletFactory.createWallet(this.network, this.walletChoice);
+    if (!isImplementedWallet(this.walletChoice)) {
+      this.walletChoice = exports.Wallets.PeraWallet;
+    }
+
+    this.wallet = WalletFactory.create(this.network, this.walletChoice);
     this.popupPermissionCallback = popupPermissionCallback;
     this.wallet.permissionCallback = this.popupPermissionCallback;
-    this.wallet.accounts = this.accountList();
-    this.wallet.defaultAccount = this.accountIndex();
+    this.wallet.accounts = this.storedAccountList();
+    this.wallet.defaultAccount = this.storedAccountPreference();
     console.log(this.wallet);
   }
 
@@ -1694,10 +1697,10 @@ var DynamicWallet = /*#__PURE__*/function () {
             case 5:
               _context.next = 7;
               return this.wallet.connect(function (acctList) {
-                _this.setAccountList(acctList);
+                _this.setStoredAccountList(acctList);
 
                 console.log(acctList);
-                _this.wallet.defaultAccount = _this.accountIndex();
+                _this.wallet.defaultAccount = _this.storedAccountPreference();
               });
 
             case 7:
@@ -1713,19 +1716,20 @@ var DynamicWallet = /*#__PURE__*/function () {
                 break;
               }
 
-              this.setAccountList(this.wallet.accounts);
-              this.wallet.defaultAccount = this.accountIndex();
+              this.setStoredAccountList(this.wallet.accounts);
+              this.wallet.defaultAccount = this.storedAccountPreference();
               return _context.abrupt("return", true);
 
             case 14:
               return _context.abrupt("break", 15);
 
             case 15:
-              // Fail
+              this.setStoredWalletChoice(this.walletChoice); // Fail
+
               this.disconnect();
               return _context.abrupt("return", false);
 
-            case 17:
+            case 18:
             case "end":
               return _context.stop();
           }
@@ -1762,44 +1766,54 @@ var DynamicWallet = /*#__PURE__*/function () {
     };
   };
 
-  _proto.setAccountList = function setAccountList(accts) {
-    sessionStorage.setItem(exports.StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
+  _proto.setStoredAccountList = function setStoredAccountList(accts) {
+    localStorage.setItem(exports.StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
   };
 
-  _proto.accountList = function accountList() {
-    var accts = sessionStorage.getItem(exports.StorageKeys.ACCOUNT_LIST);
+  _proto.storedAccountList = function storedAccountList() {
+    var accts = localStorage.getItem(exports.StorageKeys.ACCOUNT_LIST);
     return accts === "" || accts === null ? [] : JSON.parse(accts);
   };
 
-  _proto.setAccountIndex = function setAccountIndex(idx) {
+  _proto.setStoredAccountPreference = function setStoredAccountPreference(idx) {
     this.wallet.defaultAccount = idx;
-    sessionStorage.setItem(exports.StorageKeys.ACCOUNT_PREFERENCE, idx.toString());
+    localStorage.setItem(exports.StorageKeys.ACCOUNT_PREFERENCE, idx.toString());
   };
 
-  _proto.accountIndex = function accountIndex() {
-    var idx = sessionStorage.getItem(exports.StorageKeys.ACCOUNT_PREFERENCE);
+  _proto.storedAccountPreference = function storedAccountPreference() {
+    var idx = localStorage.getItem(exports.StorageKeys.ACCOUNT_PREFERENCE);
     return idx === null || idx === "" ? 0 : parseInt(idx, 10);
   };
 
-  _proto.setWalletPreference = function setWalletPreference(walletChoice) {
-    sessionStorage.setItem(exports.StorageKeys.WALLET_PREFERENCE, walletChoice);
+  _proto.setStoredWalletChoice = function setStoredWalletChoice(walletChoice) {
+    localStorage.setItem(exports.StorageKeys.WALLET_PREFERENCE, walletChoice);
   };
 
-  _proto.walletPreference = function walletPreference() {
-    var wp = sessionStorage.getItem(exports.StorageKeys.WALLET_PREFERENCE);
-    return wp === null ? exports.Wallets.PeraWallet : wp;
+  _proto.storedWalletPreference = function storedWalletPreference() {
+    var wp = localStorage.getItem(exports.StorageKeys.WALLET_PREFERENCE);
+    return wp === null ? exports.Wallets.DISCONNECTED : wp;
   };
 
-  _proto.networkPreference = function networkPreference() {
-    var wp = sessionStorage.getItem(exports.StorageKeys.NETWORK_PREFERENCE);
+  _proto.setStoredNetworkPreference = function setStoredNetworkPreference(networkChoice) {
+    if (!networkChoice) networkChoice = exports.Networks.TestNet;
+    localStorage.setItem(exports.StorageKeys.NETWORK_PREFERENCE, networkChoice);
+  };
+
+  _proto.storedNetworkPreference = function storedNetworkPreference() {
+    var wp = localStorage.getItem(exports.StorageKeys.NETWORK_PREFERENCE);
     return wp === null ? exports.Networks.TestNet : wp;
   };
 
+  _proto.flushLocalStorage = function flushLocalStorage() {
+    localStorage.clear();
+  };
+
   _proto.disconnect = function disconnect() {
-    if (this.wallet !== undefined) this.wallet.disconnect();
-    sessionStorage.setItem(exports.StorageKeys.ACCOUNT_LIST, "");
-    sessionStorage.setItem(exports.StorageKeys.ACCOUNT_PREFERENCE, "");
-    sessionStorage.setItem(exports.StorageKeys.WALLET_PREFERENCE, "");
+    if (this.wallet !== undefined) {
+      this.wallet.disconnect();
+    }
+
+    this.flushLocalStorage();
   };
 
   _proto.getDefaultAccount = function getDefaultAccount() {

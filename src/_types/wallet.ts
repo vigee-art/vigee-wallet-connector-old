@@ -2,11 +2,13 @@ import { Transaction } from "algosdk";
 import { SignedTxn } from ".";
 
 export enum Wallets {
+    DISCONNECTED = "DC",
     PeraWallet = "PeraWallet",
     MyAlgoWallet = "MyAlgoWallet",
     AlgoSignerWallet = "AlgoSignerWallet"
 }
 
+export type ImplementedWallets = Wallets.AlgoSignerWallet | Wallets.MyAlgoWallet | Wallets.PeraWallet;
 export enum Networks {
     TestNet = "TestNet",
     MainNet = "MainNet",
@@ -20,13 +22,6 @@ export enum StorageKeys {
     NETWORK_PREFERENCE = "network-preference"
 }
 export type WalletConstructor<T extends IWallet> = (new () => T) | (new (network: Networks) => T);
-
-// export const walletConstructorMap: Record<WalletChoice, WalletConstructor<AllowedWallets>> = {
-//     'wallet-connect': WalletConnectWallet,
-//     'algo-signer': AlgoSignerWallet,
-//     'my-algo-connect': MyAlgoWallet,
-//     // "insecure-wallet": InsecureWallet,
-// };
 
 export interface IWallet {
     accounts: string[];

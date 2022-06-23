@@ -1,13 +1,10 @@
 import { Transaction, TransactionSigner } from "algosdk";
-import { IWallet, Networks, PopupPermissionCallback, SignedTxn, StorageKeys, Wallets } from "../_types";
+import { ImplementedWallets, IWallet, Networks, PopupPermissionCallback, SignedTxn, StorageKeys, Wallets } from "../_types";
 import { WalletFactory } from "./WalletFactory";
 
-// export const allowedWallets = {
-//     "PeraWallet": PeraWallet,
-//     "AlgoSignerWallet": AlgoSignerWallet,
-//     "MyAlgoWallet": MyAlgoWallet
-// };
-
+function isImplementedWallet(wallet: Wallets | ImplementedWallets): wallet is ImplementedWallets {
+    return (wallet as ImplementedWallets) !== undefined;
+}
 export class DynamicWallet {
     network: Networks;
     popupPermissionCallback?: PopupPermissionCallback;
@@ -16,24 +13,28 @@ export class DynamicWallet {
 
     constructor(
         network?: Networks,
-        popupPermissionCallback?: PopupPermissionCallback,
         walletChoice?: Wallets,
+        popupPermissionCallback?: PopupPermissionCallback,
     ) {
         if (!network && !(network in Object.keys(Networks).values())) {
-            this.network = this.networkPreference();
+            this.network = this.storedNetworkPreference();
         }
-        this.walletChoice = this.walletPreference();
-
         if (network) this.network = network;
-        if (walletChoice) this.walletChoice = walletChoice;
-        if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback;
 
+        if (walletChoice) this.setStoredWalletChoice(walletChoice);
+        this.walletChoice = this.storedWalletPreference();
+
+        if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback;
         // this.wallet = WalletFactory.createWallet(this.network, this.walletChoice);
-        this.wallet = WalletFactory.createWallet(this.network, this.walletChoice);
+        if (!isImplementedWallet(this.walletChoice)) {
+            this.walletChoice = Wallets.PeraWallet;
+        }
+        this.wallet = WalletFactory.create(this.network, this.walletChoice);
+
         this.popupPermissionCallback = popupPermissionCallback;
         this.wallet.permissionCallback = this.popupPermissionCallback;
-        this.wallet.accounts = this.accountList();
-        this.wallet.defaultAccount = this.accountIndex();
+        this.wallet.accounts = this.storedAccountList();
+        this.wallet.defaultAccount = this.storedAccountPreference();
         console.log(this.wallet);
     }
 
@@ -43,23 +44,22 @@ export class DynamicWallet {
         switch (this.walletChoice) {
             case Wallets.PeraWallet:
                 await this.wallet.connect((acctList: string[]) => {
-                    this.setAccountList(acctList);
+                    this.setStoredAccountList(acctList);
                     console.log(acctList);
-                    this.wallet.defaultAccount = this.accountIndex();
+                    this.wallet.defaultAccount = this.storedAccountPreference();
                 });
 
                 return true;
 
             default:
                 if (await this.wallet.connect()) {
-                    this.setAccountList(this.wallet.accounts);
-                    this.wallet.defaultAccount = this.accountIndex();
+                    this.setStoredAccountList(this.wallet.accounts);
+                    this.wallet.defaultAccount = this.storedAccountPreference();
                     return true;
                 }
-
                 break;
         }
-
+        this.setStoredWalletChoice(this.walletChoice);
         // Fail
         this.disconnect();
         return false;
@@ -83,44 +83,53 @@ export class DynamicWallet {
         };
     }
 
-    setAccountList(accts: string[]) {
+    setStoredAccountList(accts: string[]) {
         localStorage.setItem(StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
     }
 
-    accountList(): string[] {
+    storedAccountList(): string[] {
         const accts = localStorage.getItem(StorageKeys.ACCOUNT_LIST);
         return accts === "" || accts === null ? [] : JSON.parse(accts);
     }
 
-    setAccountIndex(idx: number) {
+    setStoredAccountPreference(idx: number) {
         this.wallet.defaultAccount = idx;
         localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, idx.toString());
     }
 
-    accountIndex(): number {
+    storedAccountPreference(): number {
         const idx = localStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE);
         return idx === null || idx === "" ? 0 : parseInt(idx, 10);
     }
 
-    setWalletPreference(walletChoice: Wallets) {
+    setStoredWalletChoice(walletChoice: Wallets) {
         localStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
     }
 
-    walletPreference(): Wallets {
-        const wp = localStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets | null;
-        return wp === null ? Wallets.PeraWallet : wp;
+    storedWalletPreference(): Wallets {
+        const wp = localStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets;
+        return wp === null ? Wallets.DISCONNECTED : wp;
     }
 
-    networkPreference(): Networks {
-        const wp = localStorage.getItem(StorageKeys.NETWORK_PREFERENCE) as Networks | null;
+    setStoredNetworkPreference(networkChoice?: Networks) {
+        if (!networkChoice) networkChoice = Networks.TestNet;
+        localStorage.setItem(StorageKeys.NETWORK_PREFERENCE, networkChoice);
+    }
+
+    storedNetworkPreference(): Networks {
+        const wp = localStorage.getItem(StorageKeys.NETWORK_PREFERENCE) as Networks;
         return wp === null ? Networks.TestNet : wp;
     }
 
+    flushLocalStorage() {
+        localStorage.clear();
+    }
+
     disconnect() {
-        if (this.wallet !== undefined) this.wallet.disconnect();
-        localStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
-        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
-        localStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
+        if (this.wallet !== undefined) {
+            this.wallet.disconnect();
+        }
+        this.flushLocalStorage();
     }
 
     getDefaultAccount(): string {

@@ -1,10 +1,12 @@
 import { Transaction } from "algosdk";
 import { SignedTxn } from ".";
 export declare enum Wallets {
+    DISCONNECTED = "DC",
     PeraWallet = "PeraWallet",
     MyAlgoWallet = "MyAlgoWallet",
     AlgoSignerWallet = "AlgoSignerWallet"
 }
+export declare type ImplementedWallets = Wallets.AlgoSignerWallet | Wallets.MyAlgoWallet | Wallets.PeraWallet;
 export declare enum Networks {
     TestNet = "TestNet",
     MainNet = "MainNet",
