@@ -63,31 +63,20 @@ export class DynamicWallet {
     async connect(): Promise<boolean> {
         let newlyConnected = false;
         if (this.wallet === undefined) return false;
-        switch (this.walletChoice) {
 
-            case Wallets.PeraWallet:
-                if (
-                    await this.wallet.connect((acctList: string[]) => {
-                        this.setStoredAccountList(acctList);
-                    })
-                ) { newlyConnected = true; }
-                break;
-            default:
-                if (await this.wallet.connect()) {
-                    newlyConnected = true;
-                }
-                break;
-        }
-        if (!newlyConnected) {
-            this.walletChoice = this.storedWalletChoice();
-            console.log("something went wrong");
-            this.disconnect();
-        } else {
+        if (await this.wallet.connect()) {
+            newlyConnected = true;
             this.setStoredAccountList(this.wallet.accounts);
             this.setStoredAccountPreference(parseInt(this.wallet.getDefaultAccount(), 10));
             this.setStoredNetworkPreference(this.wallet.network);
+            return true;
+        } else {
+            this.walletChoice = this.storedWalletChoice();
+            this.network = this.storedNetworkPreference();
+            console.log("something went wrong");
+            this.disconnect();
+            return false;
         }
-        return newlyConnected;
     }
 
     connected(): boolean {

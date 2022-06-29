@@ -28,7 +28,7 @@ class PeraWallet implements IWallet {
     });
   }
 
-  async connect(cb: any): Promise<boolean> {
+  async connect(): Promise<boolean> {
     // Check if connection is already established
     if (this.connector.connected) return true;
     await this.connector.createSession();
