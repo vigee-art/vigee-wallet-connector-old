@@ -3,9 +3,9 @@ import { SignedTxn } from ".";
 
 export enum Wallets {
     DISCONNECTED = "DC",
-    PERA = "PeraWallet",
-    MYALGO = "MyAlgoWallet",
-    ALGOSIGNER = "AlgoSignerWallet"
+    PERA = "PERA",
+    MYALGO = "MYALGO",
+    ALGOSIGNER = "ALGOSIGNER"
 }
 
 export type ImplementedWallets = Wallets.ALGOSIGNER | Wallets.MYALGO | Wallets.PERA;
