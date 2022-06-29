@@ -3,15 +3,15 @@ import { SignedTxn } from ".";
 
 export enum Wallets {
     DISCONNECTED = "DC",
-    PeraWallet = "PeraWallet",
-    MyAlgoWallet = "MyAlgoWallet",
-    AlgoSignerWallet = "AlgoSignerWallet"
+    PERA = "PeraWallet",
+    MYALGO = "MyAlgoWallet",
+    ALGOSIGNER = "AlgoSignerWallet"
 }
 
-export type ImplementedWallets = Wallets.AlgoSignerWallet | Wallets.MyAlgoWallet | Wallets.PeraWallet;
+export type ImplementedWallets = Wallets.ALGOSIGNER | Wallets.MYALGO | Wallets.PERA;
 export enum Networks {
-    TestNet = "TestNet",
-    MainNet = "MainNet",
+    TESTNET = "TestNet",
+    MAINNET = "MainNet",
     VIGEE_DEV = "vigee"
 }
 

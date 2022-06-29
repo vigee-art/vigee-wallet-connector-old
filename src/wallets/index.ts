@@ -22,7 +22,7 @@ export class DynamicWallet {
         if (walletChoice) this._walletChoice = walletChoice;
 
         if (!isImplementedWallet(this._walletChoice)) {
-            this._walletChoice = Wallets.PeraWallet;
+            this._walletChoice = Wallets.PERA;
         }
 
         if (network) { this.setStoredNetworkPreference(network); }
@@ -124,13 +124,13 @@ export class DynamicWallet {
     }
 
     setStoredNetworkPreference(networkChoice?: Networks) {
-        if (!networkChoice) networkChoice = Networks.TestNet;
+        if (!networkChoice) networkChoice = Networks.TESTNET;
         sessionStorage.setItem(StorageKeys.NETWORK_PREFERENCE, networkChoice);
     }
 
     storedNetworkPreference(): Networks {
         const wp = sessionStorage.getItem(StorageKeys.NETWORK_PREFERENCE) as Networks;
-        return wp === null ? Networks.TestNet : wp;
+        return wp === null ? Networks.TESTNET : wp;
     }
 
     flushStorage() {
