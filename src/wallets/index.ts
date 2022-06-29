@@ -61,11 +61,9 @@ export class DynamicWallet {
 
 
     async connect(): Promise<boolean> {
-        let newlyConnected = false;
         if (this.wallet === undefined) return false;
 
         if (await this.wallet.connect()) {
-            newlyConnected = true;
             this.setStoredAccountList(this.wallet.accounts);
             this.setStoredAccountPreference(parseInt(this.wallet.getDefaultAccount(), 10));
             this.setStoredNetworkPreference(this.wallet.network);
