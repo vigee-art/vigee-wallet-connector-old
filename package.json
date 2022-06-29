@@ -1,6 +1,6 @@
 {
   "name": "@juweber99/vigee-wallet-connector",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "vigee library to allow persisted wallet connection across multiple wallets",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

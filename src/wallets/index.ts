@@ -133,7 +133,7 @@ export class DynamicWallet {
         return wp === null ? Networks.TestNet : wp;
     }
 
-    flushsessionStorage() {
+    flushStorage() {
         console.log("flushing storage");
         sessionStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
         sessionStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
@@ -143,7 +143,7 @@ export class DynamicWallet {
     disconnect() {
         if (this.wallet !== undefined && !this.wallet.isConnected()) {
             this.wallet.disconnect();
-            this.flushsessionStorage();
+            this.flushStorage();
         } else {
             throw new Error("no wallet is connected and a disconnect was tried");
         }
