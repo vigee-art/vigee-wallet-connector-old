@@ -96,54 +96,54 @@ export class DynamicWallet {
     }
 
     setStoredAccountList(accts: string[]) {
-        localStorage.setItem(StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
+        sessionStorage.setItem(StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
     }
 
     storedAccountList(): string[] {
-        const accts = localStorage.getItem(StorageKeys.ACCOUNT_LIST);
+        const accts = sessionStorage.getItem(StorageKeys.ACCOUNT_LIST);
         return accts === "" || accts === null ? [] : JSON.parse(accts);
     }
 
     setStoredAccountPreference(idx: number) {
         this.wallet.defaultAccount = idx;
-        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE.concat(this.walletChoice), idx.toString());
+        sessionStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE.concat(this.walletChoice), idx.toString());
     }
 
     storedAccountPreference(): number {
-        const idx = localStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE.concat(this.walletChoice));
+        const idx = sessionStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE.concat(this.walletChoice));
         return idx === null || idx === "" ? 0 : parseInt(idx, 10);
     }
 
     setStoredWalletChoice(walletChoice: Wallets) {
-        localStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
+        sessionStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
     }
 
     storedWalletChoice(): Wallets {
-        const wp = localStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets;
+        const wp = sessionStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets;
         return wp === null ? Wallets.DISCONNECTED : wp;
     }
 
     setStoredNetworkPreference(networkChoice?: Networks) {
         if (!networkChoice) networkChoice = Networks.TestNet;
-        localStorage.setItem(StorageKeys.NETWORK_PREFERENCE, networkChoice);
+        sessionStorage.setItem(StorageKeys.NETWORK_PREFERENCE, networkChoice);
     }
 
     storedNetworkPreference(): Networks {
-        const wp = localStorage.getItem(StorageKeys.NETWORK_PREFERENCE) as Networks;
+        const wp = sessionStorage.getItem(StorageKeys.NETWORK_PREFERENCE) as Networks;
         return wp === null ? Networks.TestNet : wp;
     }
 
-    flushLocalStorage() {
+    flushsessionStorage() {
         console.log("flushing storage");
-        localStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
-        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
-        localStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
+        sessionStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
+        sessionStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
+        sessionStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
     }
 
     disconnect() {
         if (this.wallet !== undefined && !this.wallet.isConnected()) {
             this.wallet.disconnect();
-            this.flushLocalStorage();
+            this.flushsessionStorage();
         } else {
             throw new Error("no wallet is connected and a disconnect was tried");
         }
