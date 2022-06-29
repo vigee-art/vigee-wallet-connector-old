@@ -1,5 +1,5 @@
 import algosdk from 'algosdk';
-import MyAlgo from '@randlabs/myalgo-connect';
+import MyAlgoConnect from '@randlabs/myalgo-connect';
 import WalletConnect from '@walletconnect/client';
 import WalletConnectQRCodeModal from 'algorand-walletconnect-qrcode-modal';
 import { formatJsonRpcRequest } from '@json-rpc-tools/utils';
@@ -790,8 +790,8 @@ var StorageKeys;
 
 (function (StorageKeys) {
   StorageKeys["ACCOUNT_LIST"] = "acct-list";
-  StorageKeys["WALLET_PREFERENCE"] = "wallet-preference";
   StorageKeys["ACCOUNT_PREFERENCE"] = "acct-preference";
+  StorageKeys["WALLET_PREFERENCE"] = "wallet-preference";
   StorageKeys["NETWORK_PREFERENCE"] = "network-preference";
 })(StorageKeys || (StorageKeys = {})); // export interface Wallet {
 //     accounts: string[];
@@ -965,7 +965,7 @@ var AlgoSignerWallet = /*#__PURE__*/function () {
   };
 
   _proto.disconnect = function disconnect() {
-    localStorage.removeItem(StorageKeys.ACCOUNT_PREFERENCE);
+    console.log("disconnecting AS");
   };
 
   _proto.getDefaultAccount = function getDefaultAccount() {
@@ -1112,7 +1112,7 @@ var MyAlgoWallet = /*#__PURE__*/function () {
   function MyAlgoWallet() {
     this.accounts = [];
     this.defaultAccount = 0;
-    this.walletConn = new MyAlgo();
+    this.walletConn = new MyAlgoConnect();
   }
 
   MyAlgoWallet.displayName = function displayName() {
@@ -1649,27 +1649,37 @@ function isImplementedWallet(wallet) {
   return wallet !== undefined;
 }
 
+function isValidNetwork(network) {
+  return network !== undefined;
+}
+
 var DynamicWallet = /*#__PURE__*/function () {
   function DynamicWallet(network, walletChoice, popupPermissionCallback) {
-    if (!network && !(network in Object.keys(Networks).values())) {
-      this.network = this.storedNetworkPreference();
+    if (walletChoice) {
+      this.setStoredWalletChoice(walletChoice);
     }
 
-    if (network) this.network = network;
-    if (walletChoice) this.setStoredWalletChoice(walletChoice);
-    this.walletChoice = this.storedWalletPreference();
-    if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback; // this.wallet = WalletFactory.createWallet(this.network, this.walletChoice);
+    this.walletChoice = this.storedWalletChoice();
 
     if (!isImplementedWallet(this.walletChoice)) {
       this.walletChoice = Wallets.PeraWallet;
     }
 
-    this.wallet = WalletFactory.create(this.network, this.walletChoice);
+    if (network) {
+      this.setStoredNetworkPreference(network);
+    }
+
+    if (!isValidNetwork(this.storedNetworkPreference())) {
+      this.setStoredNetworkPreference();
+    }
+
+    this.network = this.storedNetworkPreference();
+    if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback;
     this.popupPermissionCallback = popupPermissionCallback;
+    this.wallet = WalletFactory.create(this.network, this.walletChoice);
     this.wallet.permissionCallback = this.popupPermissionCallback;
     this.wallet.accounts = this.storedAccountList();
     this.wallet.defaultAccount = this.storedAccountPreference();
-    console.log(this.wallet);
   }
 
   var _proto = DynamicWallet.prototype;
@@ -1698,9 +1708,6 @@ var DynamicWallet = /*#__PURE__*/function () {
               _context.next = 7;
               return this.wallet.connect(function (acctList) {
                 _this.setStoredAccountList(acctList);
-
-                console.log(acctList);
-                _this.wallet.defaultAccount = _this.storedAccountPreference();
               });
 
             case 7:
@@ -1724,8 +1731,8 @@ var DynamicWallet = /*#__PURE__*/function () {
               return _context.abrupt("break", 15);
 
             case 15:
-              this.setStoredWalletChoice(this.walletChoice); // Fail
-
+              // Fail
+              console.log("something went wrong");
               this.disconnect();
               return _context.abrupt("return", false);
 
@@ -1789,7 +1796,7 @@ var DynamicWallet = /*#__PURE__*/function () {
     localStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
   };
 
-  _proto.storedWalletPreference = function storedWalletPreference() {
+  _proto.storedWalletChoice = function storedWalletChoice() {
     var wp = localStorage.getItem(StorageKeys.WALLET_PREFERENCE);
     return wp === null ? Wallets.DISCONNECTED : wp;
   };
@@ -1805,15 +1812,19 @@ var DynamicWallet = /*#__PURE__*/function () {
   };
 
   _proto.flushLocalStorage = function flushLocalStorage() {
-    localStorage.clear();
+    console.log("flushing storage");
+    localStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
+    localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
+    localStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
   };
 
   _proto.disconnect = function disconnect() {
-    if (this.wallet !== undefined) {
+    if (this.wallet !== undefined && !this.wallet.isConnected()) {
       this.wallet.disconnect();
+      this.flushLocalStorage();
+    } else {
+      throw new Error("no wallet is connected and a disconnect was tried");
     }
-
-    this.flushLocalStorage();
   };
 
   _proto.getDefaultAccount = function getDefaultAccount() {

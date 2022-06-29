@@ -5,64 +5,89 @@ import { WalletFactory } from "./WalletFactory";
 function isImplementedWallet(wallet: Wallets | ImplementedWallets): wallet is ImplementedWallets {
     return (wallet as ImplementedWallets) !== undefined;
 }
+function isValidNetwork(network: string | Networks): network is Networks {
+    return (network as Networks) !== undefined;
+}
 export class DynamicWallet {
-    network: Networks;
-    popupPermissionCallback?: PopupPermissionCallback;
+    private _network: Networks;
+    private _walletChoice: Wallets;
     wallet: IWallet;
-    walletChoice: Wallets;
+    private readonly popupPermissionCallback?: PopupPermissionCallback;
 
     constructor(
-        network?: Networks,
+        network: Networks,
         walletChoice?: Wallets,
         popupPermissionCallback?: PopupPermissionCallback,
     ) {
-        if (!network && !(network in Object.keys(Networks).values())) {
-            this.network = this.storedNetworkPreference();
-        }
-        if (network) this.network = network;
+        if (walletChoice) this._walletChoice = walletChoice;
 
-        if (walletChoice) this.setStoredWalletChoice(walletChoice);
-        this.walletChoice = this.storedWalletPreference();
+        if (!isImplementedWallet(this._walletChoice)) {
+            this._walletChoice = Wallets.PeraWallet;
+        }
+
+        if (network) { this.setStoredNetworkPreference(network); }
+        if (!(isValidNetwork(this.storedNetworkPreference()))) {
+            this.setStoredNetworkPreference();
+        }
+        this._network = this.storedNetworkPreference();
+
 
         if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback;
-        // this.wallet = WalletFactory.createWallet(this.network, this.walletChoice);
-        if (!isImplementedWallet(this.walletChoice)) {
-            this.walletChoice = Wallets.PeraWallet;
-        }
-        this.wallet = WalletFactory.create(this.network, this.walletChoice);
-
         this.popupPermissionCallback = popupPermissionCallback;
+
+        this.wallet = WalletFactory.create(this._network, this._walletChoice);
         this.wallet.permissionCallback = this.popupPermissionCallback;
         this.wallet.accounts = this.storedAccountList();
         this.wallet.defaultAccount = this.storedAccountPreference();
-        console.log(this.wallet);
     }
 
+
+    public get walletChoice(): Wallets {
+        return this._walletChoice;
+    }
+
+    public set walletChoice(newChoice: Wallets) {
+        this._walletChoice = newChoice;
+    }
+
+    public set network(newChoice: Networks) {
+        this._network = newChoice;
+    }
+
+    public get network(): Networks {
+        return this._network;
+    }
+
+
+
     async connect(): Promise<boolean> {
+        let newlyConnected = false;
         if (this.wallet === undefined) return false;
-
         switch (this.walletChoice) {
+
             case Wallets.PeraWallet:
-                await this.wallet.connect((acctList: string[]) => {
-                    this.setStoredAccountList(acctList);
-                    console.log(acctList);
-                    this.wallet.defaultAccount = this.storedAccountPreference();
-                });
-
-                return true;
-
+                if (
+                    await this.wallet.connect((acctList: string[]) => {
+                        this.setStoredAccountList(acctList);
+                    })
+                ) { newlyConnected = true; }
+                break;
             default:
                 if (await this.wallet.connect()) {
-                    this.setStoredAccountList(this.wallet.accounts);
-                    this.wallet.defaultAccount = this.storedAccountPreference();
-                    return true;
+                    newlyConnected = true;
                 }
                 break;
         }
-        this.setStoredWalletChoice(this.walletChoice);
-        // Fail
-        this.disconnect();
-        return false;
+        if (!newlyConnected) {
+            this.walletChoice = this.storedWalletChoice();
+            console.log("something went wrong");
+            this.disconnect();
+        } else {
+            this.setStoredAccountList(this.wallet.accounts);
+            this.setStoredAccountPreference(parseInt(this.wallet.getDefaultAccount(), 10));
+            this.setStoredNetworkPreference(this.wallet.network);
+        }
+        return newlyConnected;
     }
 
     connected(): boolean {
@@ -94,11 +119,11 @@ export class DynamicWallet {
 
     setStoredAccountPreference(idx: number) {
         this.wallet.defaultAccount = idx;
-        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, idx.toString());
+        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE.concat(this.walletChoice), idx.toString());
     }
 
     storedAccountPreference(): number {
-        const idx = localStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE);
+        const idx = localStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE.concat(this.walletChoice));
         return idx === null || idx === "" ? 0 : parseInt(idx, 10);
     }
 
@@ -106,7 +131,7 @@ export class DynamicWallet {
         localStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
     }
 
-    storedWalletPreference(): Wallets {
+    storedWalletChoice(): Wallets {
         const wp = localStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets;
         return wp === null ? Wallets.DISCONNECTED : wp;
     }
@@ -122,14 +147,19 @@ export class DynamicWallet {
     }
 
     flushLocalStorage() {
-        localStorage.clear();
+        console.log("flushing storage");
+        localStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
+        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
+        localStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
     }
 
     disconnect() {
-        if (this.wallet !== undefined) {
+        if (this.wallet !== undefined && !this.wallet.isConnected()) {
             this.wallet.disconnect();
+            this.flushLocalStorage();
+        } else {
+            throw new Error("no wallet is connected and a disconnect was tried");
         }
-        this.flushLocalStorage();
     }
 
     getDefaultAccount(): string {

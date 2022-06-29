@@ -47,14 +47,12 @@ class PeraWallet implements IWallet {
         throw error;
       }
       const { accounts } = payload.params[0];
-      cb(accounts);
       this.accounts = accounts;
     });
 
     this.connector.on("disconnect", (error, _payload) => {
       if (error) throw error;
     });
-
 
     return new Promise(resolve => {
       const reconn = setInterval(() => {

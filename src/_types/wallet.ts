@@ -17,8 +17,8 @@ export enum Networks {
 
 export enum StorageKeys {
     ACCOUNT_LIST = "acct-list",
-    WALLET_PREFERENCE = "wallet-preference",
     ACCOUNT_PREFERENCE = "acct-preference",
+    WALLET_PREFERENCE = "wallet-preference",
     NETWORK_PREFERENCE = "network-preference"
 }
 export type WalletConstructor<T extends IWallet> = (new () => T) | (new (network: Networks) => T);

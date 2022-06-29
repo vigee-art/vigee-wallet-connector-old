@@ -1,11 +1,11 @@
-import MyAlgo from "@randlabs/myalgo-connect";
+import MyAlgoConnect from '@randlabs/myalgo-connect';
 import { Transaction } from "algosdk";
 import { IWallet, Networks, PopupPermissionCallback, SignedTxn } from "../_types";
 declare class MyAlgoWallet implements IWallet {
     accounts: string[];
     defaultAccount: number;
     permissionCallback?: PopupPermissionCallback;
-    walletConn: MyAlgo;
+    walletConn: MyAlgoConnect;
     network?: Networks;
     constructor();
     static displayName(): string;

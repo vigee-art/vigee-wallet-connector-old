@@ -1,6 +1,6 @@
 {
   "name": "@juweber99/vigee-wallet-connector",
-  "version": "0.0.36",
+  "version": "0.1.9",
   "description": "vigee library to allow persisted wallet connection across multiple wallets",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "@json-rpc-tools/utils": "^1.7.6",
-    "@randlabs/myalgo-connect": "^1.1.0",
-    "@walletconnect/client": "^1.6.5",
-    "@walletconnect/qrcode-modal": "^1.6.5",
-    "algorand-walletconnect-qrcode-modal": "^1.6.1",
+    "@randlabs/myalgo-connect": "^1.2.0",
+    "@walletconnect/client": "^1.7.8",
+    "@walletconnect/qrcode-modal": "^1.7.8",
+    "algorand-walletconnect-qrcode-modal": "^1.7.4",
     "algosdk": "^1.15.0",
     "buffer": "^6.0.3"
   },

@@ -5,7 +5,7 @@ export declare class DynamicWallet {
     popupPermissionCallback?: PopupPermissionCallback;
     wallet: IWallet;
     walletChoice: Wallets;
-    constructor(network?: Networks, walletChoice?: Wallets, popupPermissionCallback?: PopupPermissionCallback);
+    constructor(network: Networks, walletChoice?: Wallets, popupPermissionCallback?: PopupPermissionCallback);
     connect(): Promise<boolean>;
     connected(): boolean;
     getSigner(): TransactionSigner;
@@ -14,7 +14,7 @@ export declare class DynamicWallet {
     setStoredAccountPreference(idx: number): void;
     storedAccountPreference(): number;
     setStoredWalletChoice(walletChoice: Wallets): void;
-    storedWalletPreference(): Wallets;
+    storedWalletChoice(): Wallets;
     setStoredNetworkPreference(networkChoice?: Networks): void;
     storedNetworkPreference(): Networks;
     flushLocalStorage(): void;
