@@ -141,7 +141,7 @@ export class DynamicWallet {
     }
 
     disconnect() {
-        if (this.wallet !== undefined && !this.wallet.isConnected()) {
+        if (this.wallet !== undefined && this.wallet.isConnected()) {
             this.wallet.disconnect();
             this.flushStorage();
         } else {

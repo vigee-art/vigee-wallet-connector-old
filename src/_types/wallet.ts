@@ -39,47 +39,6 @@ export interface IWallet {
     signTeal(teal: Uint8Array): Promise<Uint8Array>;
 }
 
-// export declare class AlgoSignerWallet implements Wallet {
-//     accounts: string[];
-//     defaultAccount: number;
-//     network: string;
-//     permissionCallback?: PopupPermissionCallback;
-//     displayName(): string;
-//     img(inverted: boolean): string;
-//     connect(settings?: any): Promise<boolean>;
-//     isConnected(): boolean;
-//     disconnect(): void;
-//     getDefaultAccount(): string;
-//     signTxn(txns: Transaction[]): Promise<SignedTxn[]>;
-//     signBytes(b: Uint8Array): Promise<Uint8Array>;
-//     signTeal(teal: Uint8Array): Promise<Uint8Array>;
-// }
-
-// export declare class MyAlgoWallet extends BaseWallet {
-//     displayName(): string;
-//     img(inverted: boolean): string;
-//     connect(settings?: any): Promise<boolean>;
-//     isConnected(): boolean;
-//     disconnect(): void;
-//     getDefaultAccount(): string;
-//     signTxn(txns: Transaction[]): Promise<SignedTxn[]>;
-//     signBytes(b: Uint8Array): Promise<Uint8Array>;
-//     signTeal(teal: Uint8Array): Promise<Uint8Array>;
-// }
-
-// export declare class WalletConnectWallet extends BaseWallet {
-//     displayName(): string;
-//     img(inverted: boolean): string;
-//     connect(settings?: any): Promise<boolean>;
-//     isConnected(): boolean;
-//     disconnect(): void;
-//     getDefaultAccount(): string;
-//     signTxn(txns: Transaction[]): Promise<SignedTxn[]>;
-//     signBytes(b: Uint8Array): Promise<Uint8Array>;
-//     signTeal(teal: Uint8Array): Promise<Uint8Array>;
-// }
-
-
 // Meant for wallets that require a popup (MyAlgo Connect) 
 //  In most browsers triggering a popup requires the the user
 //  to have taken an action (like clicking something)
@@ -94,25 +53,3 @@ export interface PermissionResult {
 export interface PopupPermissionCallback {
     request(permissionResult: PermissionResult): Promise<SignedTxn[]>;
 }
-
-// export interface Wallet {
-//     accounts: string[];
-//     defaultAccount: number;
-//     network: string;
-//     permissionCallback?: PopupPermissionCallback;
-
-//     displayName(): string;
-
-//     img(inverted: boolean): string;
-
-//     connect(settings?: any): Promise<boolean>;
-//     isConnected(): boolean;
-
-//     disconnect(): void;
-
-//     getDefaultAccount(): string;
-
-//     signTxn(txns: Transaction[]): Promise<SignedTxn[]>;
-//     signBytes(b: Uint8Array): Promise<Uint8Array>;
-//     signTeal(teal: Uint8Array): Promise<Uint8Array>;
-// }
