@@ -2,9 +2,8 @@ import { Transaction, TransactionSigner } from "algosdk";
 import { ImplementedWallets, IWallet, Networks, PopupPermissionCallback, SignedTxn, StorageKeys, Wallets } from "../_types";
 import { WalletFactory } from "./WalletFactory";
 
-function isImplementedWallet(wallet: Wallets | ImplementedWallets): wallet is ImplementedWallets {
-    return (wallet as ImplementedWallets) !== undefined;
-}
+
+
 function isValidNetwork(network: string | Networks): network is Networks {
     return (network as Networks) !== undefined;
 }
@@ -19,11 +18,7 @@ export class DynamicWallet {
         walletChoice?: Wallets,
         popupPermissionCallback?: PopupPermissionCallback,
     ) {
-        if (walletChoice) this._walletChoice = walletChoice;
-
-        if (!isImplementedWallet(this._walletChoice)) {
-            this._walletChoice = Wallets.PERA;
-        }
+        console.log("creating wallet with choice: " + walletChoice);
 
         if (network) { this.setStoredNetworkPreference(network); }
         if (!(isValidNetwork(this.storedNetworkPreference()))) {
@@ -31,14 +26,18 @@ export class DynamicWallet {
         }
         this._network = this.storedNetworkPreference();
 
+        if (walletChoice == Wallets.ALGOSIGNER || walletChoice == Wallets.MYALGO || walletChoice == Wallets.PERA) {
+            console.log(walletChoice + "is implemented");
+            this._walletChoice = walletChoice;
+            this.wallet = WalletFactory.create(this._network, walletChoice as ImplementedWallets);
+            this.wallet.permissionCallback = this.popupPermissionCallback;
+        } else this._walletChoice = Wallets.DISCONNECTED;
 
         if (popupPermissionCallback) this.popupPermissionCallback = popupPermissionCallback;
         this.popupPermissionCallback = popupPermissionCallback;
 
-        this.wallet = WalletFactory.create(this._network, this._walletChoice);
-        this.wallet.permissionCallback = this.popupPermissionCallback;
-        this.wallet.accounts = this.storedAccountList();
-        this.wallet.defaultAccount = this.storedAccountPreference();
+        // this.wallet.accounts = this.storedAccountList();
+        // this.wallet.defaultAccountIndex = this.storedAccountPreference();
     }
 
 
@@ -47,6 +46,7 @@ export class DynamicWallet {
     }
 
     public set walletChoice(newChoice: Wallets) {
+        this.wallet = WalletFactory.create(this._network, newChoice as ImplementedWallets);
         this._walletChoice = newChoice;
     }
 
@@ -64,13 +64,13 @@ export class DynamicWallet {
         if (this.wallet === undefined) return false;
 
         if (await this.wallet.connect()) {
-            this.setStoredAccountList(this.wallet.accounts);
-            this.setStoredAccountPreference(parseInt(this.wallet.getDefaultAccount(), 10));
-            this.setStoredNetworkPreference(this.wallet.network);
+            // this.setStoredAccountList(this.wallet.accounts);
+            // this.setStoredAccountPreference(parseInt(this.wallet.getDefaultAccountAddress(), 10));
+            // this.setStoredNetworkPreference(this.wallet.network);
             return true;
         } else {
-            this.walletChoice = this.storedWalletChoice();
-            this.network = this.storedNetworkPreference();
+            //    this.walletChoice = this.storedWalletChoice();
+            //   this.network = this.storedNetworkPreference();
             console.log("something went wrong");
             this.disconnect();
             return false;
@@ -83,10 +83,11 @@ export class DynamicWallet {
 
     getSigner(): TransactionSigner {
         return (txnGroup: Transaction[], indexesToSign?: number[]) => {
-            if (indexesToSign) {
-                txnGroup = txnGroup.filter(
-                    (_txn, index) => !indexesToSign.includes(index));
-            }
+            //   if (indexesToSign) {
+            //       txnGroup = txnGroup.filter(
+            //           (_txn, index) => !indexesToSign.includes(index));
+            //   }
+            console.log("asdfasdfasdf" + indexesToSign);
             return Promise.resolve(this.signTxn(txnGroup)).then((txns) => {
                 return txns.map((tx) => {
                     return tx.blob;
@@ -95,33 +96,37 @@ export class DynamicWallet {
         };
     }
 
-    setStoredAccountList(accts: string[]) {
-        localStorage.setItem(StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
-    }
+    // setStoredAccountList(accts: string[]) {
+    //     localStorage.setItem(StorageKeys.ACCOUNT_LIST, JSON.stringify(accts));
+    // }
 
-    storedAccountList(): string[] {
-        const accts = localStorage.getItem(StorageKeys.ACCOUNT_LIST);
-        return accts === "" || accts === null ? [] : JSON.parse(accts);
-    }
+    // storedAccountList(): string[] {
+    //     const accts = localStorage.getItem(StorageKeys.ACCOUNT_LIST);
+    //     return accts === "" || accts === null ? [] : JSON.parse(accts);
+    // }
 
-    setStoredAccountPreference(idx: number) {
-        this.wallet.defaultAccount = idx;
-        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE.concat(this.walletChoice), idx.toString());
-    }
+    // setStoredAccountPreference(idx: number) {
+    //     this.wallet.defaultAccountIndex = idx;
+    //     console.log("setting account-preference: " + idx);
+    //     localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, idx.toString());
+    // }
 
-    storedAccountPreference(): number {
-        const idx = localStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE.concat(this.walletChoice));
-        return idx === null || idx === "" ? 0 : parseInt(idx, 10);
-    }
+    // storedAccountPreference(): number {
+    //     const idx = localStorage.getItem(StorageKeys.ACCOUNT_PREFERENCE);
+    //     console.log("loading account-preference: " + idx);
+    //     var test = (idx === null || idx === undefined) || idx === "" ? 0 : parseInt(idx, 10);
+    //     console.log("storedAccountPreference: " + test);
+    //     return test;
+    // }
 
-    setStoredWalletChoice(walletChoice: Wallets) {
-        localStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
-    }
+    // setStoredWalletChoice(walletChoice: Wallets) {
+    //     localStorage.setItem(StorageKeys.WALLET_PREFERENCE, walletChoice);
+    // }
 
-    storedWalletChoice(): Wallets {
-        const wp = localStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets;
-        return wp === null ? Wallets.DISCONNECTED : wp;
-    }
+    // storedWalletChoice(): Wallets {
+    //     const wp = localStorage.getItem(StorageKeys.WALLET_PREFERENCE) as Wallets;
+    //     return wp === null ? Wallets.DISCONNECTED : wp;
+    // }
 
     setStoredNetworkPreference(networkChoice?: Networks) {
         if (!networkChoice) networkChoice = Networks.TESTNET;
@@ -133,17 +138,17 @@ export class DynamicWallet {
         return wp === null ? Networks.TESTNET : wp;
     }
 
-    flushStorage() {
-        console.log("flushing storage");
-        localStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
-        localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
-        localStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
-    }
+    // flushStorage() {
+    //     console.log("flushing storage");
+    //     localStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
+    //     localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
+    //     localStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
+    // }
 
     disconnect() {
         if (this.wallet !== undefined && this.wallet.isConnected()) {
             this.wallet.disconnect();
-            this.flushStorage();
+            //   this.flushStorage();
         } else {
             throw new Error("no wallet is connected and a disconnect was tried");
         }
@@ -151,11 +156,13 @@ export class DynamicWallet {
 
     getDefaultAccount(): string {
         if (!this.connected()) return "";
-        return this.wallet.getDefaultAccount();
+        return this.wallet.getDefaultAccountAddress();
     }
 
     async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
         if (!this.connected() && !(await this.connect())) return [];
+        console.log("signing with:");
+        console.log(this.wallet);
         return this.wallet.signTxn(txns);
     }
 };

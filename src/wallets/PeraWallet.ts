@@ -12,14 +12,14 @@ const logo =
 
 class PeraWallet implements IWallet {
   accounts: string[];
-  defaultAccount: number;
+  defaultAccountIndex: number;
   connector: WalletConnect;
   permissionCallback?: PopupPermissionCallback;
   network: Networks;
 
   constructor(network: Networks) {
     this.accounts = [];
-    this.defaultAccount = 0;
+    this.defaultAccountIndex = 0;
     this.network = network;
     const bridge = "https://bridge.walletconnect.org";
     this.connector = new WalletConnect({
@@ -88,13 +88,14 @@ class PeraWallet implements IWallet {
     this.connector.killSession();
   }
 
-  getDefaultAccount(): string {
+  getDefaultAccountAddress(): string {
     if (!this.isConnected()) return "";
-    return this.accounts[this.defaultAccount];
+    return this.accounts[this.defaultAccountIndex];
   }
 
   async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
-    const defaultAddress = this.getDefaultAccount();
+    console.log("signing from pera");
+    const defaultAddress = this.getDefaultAccountAddress();
     const txnsToSign = txns.map((txn) => {
       const encodedTxn = Buffer.from(
         algosdk.encodeUnsignedTransaction(txn)

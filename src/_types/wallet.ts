@@ -25,7 +25,7 @@ export type WalletConstructor<T extends IWallet> = (new () => T) | (new (network
 
 export interface IWallet {
     accounts: string[];
-    defaultAccount: number;
+    defaultAccountIndex: number;
     network?: Networks;
     permissionCallback?: PopupPermissionCallback;
     displayName(): string;
@@ -33,7 +33,7 @@ export interface IWallet {
     connect(settings?: any): Promise<boolean>;
     isConnected(): boolean;
     disconnect(): void;
-    getDefaultAccount(): string;
+    getDefaultAccountAddress(): string;
     signTxn(txns: Transaction[]): Promise<SignedTxn[]>;
     signBytes(b: Uint8Array): Promise<Uint8Array>;
     signTeal(teal: Uint8Array): Promise<Uint8Array>;

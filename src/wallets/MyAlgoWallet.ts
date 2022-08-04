@@ -16,14 +16,14 @@ const logo =
 
 class MyAlgoWallet implements IWallet {
   accounts: string[];
-  defaultAccount: number;
+  defaultAccountIndex: number;
   permissionCallback?: PopupPermissionCallback;
   walletConn: MyAlgoConnect;
   network?: Networks;
 
   constructor() {
     this.accounts = [];
-    this.defaultAccount = 0;
+    this.defaultAccountIndex = 0;
 
     this.walletConn = new MyAlgoConnect();
   }
@@ -64,9 +64,9 @@ class MyAlgoWallet implements IWallet {
     /* noop */
   }
 
-  getDefaultAccount(): string {
+  getDefaultAccountAddress(): string {
     if (!this.isConnected()) return "";
-    return this.accounts[this.defaultAccount];
+    return this.accounts[this.defaultAccountIndex];
   }
 
   async doSign(defaultAcct: string, txns: Transaction[]): Promise<SignedTxn[]> {
@@ -95,7 +95,7 @@ class MyAlgoWallet implements IWallet {
   }
 
   async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
-    const defaultAcct = this.getDefaultAccount();
+    const defaultAcct = this.getDefaultAccountAddress();
 
     if (this.permissionCallback) {
       return await this.permissionCallback.request({
@@ -122,7 +122,7 @@ class MyAlgoWallet implements IWallet {
     teal: Uint8Array,
     _permissionCallback?: PopupPermissionCallback
   ): Promise<Uint8Array> {
-    return await this.walletConn.signLogicSig(teal, this.getDefaultAccount());
+    return await this.walletConn.signLogicSig(teal, this.getDefaultAccountAddress());
   }
 }
 

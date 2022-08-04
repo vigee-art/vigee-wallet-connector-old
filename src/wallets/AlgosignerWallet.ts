@@ -8,14 +8,15 @@ const logo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAADuCAYAAAA+7jsi
 declare const AlgoSigner: any;
 class AlgoSignerWallet implements IWallet {
     accounts: string[];
-    defaultAccount: number;
+    defaultAccountIndex: number;
     permissionCallback?: PopupPermissionCallback;
     network: Networks;
 
     constructor(network: Networks) {
         this.accounts = [];
         this.network = network;
-        this.defaultAccount = 0;
+        this.defaultAccountIndex = 0;
+        console.log(network);
     }
 
     static displayName(): string { return "AlgoSigner"; }
@@ -69,25 +70,34 @@ class AlgoSignerWallet implements IWallet {
         console.log("disconnecting AS");
     }
 
-    getDefaultAccount(): string {
+    getDefaultAccountAddress(): string {
         if (!this.isConnected()) return "";
-
-        return this.accounts[this.defaultAccount];
+        return this.accounts[this.defaultAccountIndex];
     }
 
     async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
-
-        const defaultAcct = this.getDefaultAccount();
+        console.log("signing form algosigner");
+        const defaultAcct = this.getDefaultAccountAddress();
+        debugger;
+        console.log(defaultAcct);
+        console.log(txns);
 
         const encodedTxns = txns.map((tx: Transaction) => {
             const t = { txn: AlgoSigner.encoding.msgpackToBase64(tx.toByte()) };
+            var expextedAddr = algosdk.encodeAddress(tx.from.publicKey);
+            console.log("expected Signer Addr: " + expextedAddr);
+            console.log("To sign transaction: " + t);
             // @ts-ignore
-            if (algosdk.encodeAddress(tx.from.publicKey) !== defaultAcct) t.signers = [];
+            if (expextedAddr !== defaultAcct) { t.signers = []; };
             return t;
         });
+        console.log(encodedTxns);
+
+        debugger;
 
         const signed = await AlgoSigner.signTxn(encodedTxns);
-
+        console.log(signed);
+        debugger;
         return signed.map((signedTx: any) => {
             if (signedTx) return {
                 txID: signedTx.txID,
