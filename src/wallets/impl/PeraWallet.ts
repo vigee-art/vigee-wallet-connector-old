@@ -1,31 +1,48 @@
-import algosdk, { Transaction, TransactionParams } from "algosdk";
+import algosdk, { Transaction, TransactionParams, TransactionSigner } from "algosdk";
 
 import WalletConnect from "@walletconnect/client";
 import WalletConnectQRCodeModal from "algorand-walletconnect-qrcode-modal";
 
 import { formatJsonRpcRequest } from "@json-rpc-tools/utils";
-import { IWallet, Networks, PopupPermissionCallback, SignedTxn } from "../_types";
+import { Networks, SignedTxn, WalletImplementation, Wallets } from "../../_types";
 
 const logo =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDIwSDE3LjUwNDdMMTUuODY5MyAxMy45NkwxMi4zNjI1IDIwSDkuNTYzNzVMMTQuOTc1OCAxMC42NDU2TDE0LjA5OTEgNy4zODE3TDYuNzk4NzQgMjBINEwxMy4yNTYxIDRIMTUuNzE3NkwxNi43Nzk4IDcuOTg3MzhIMTkuMzA4N0wxNy41ODkgMTAuOTgyMUwyMCAyMFoiIGZpbGw9IiMyQjJCMkYiLz4KPC9zdmc+Cg==";
 
 
-class PeraWallet implements IWallet {
-  accounts: string[];
-  defaultAccountIndex: number;
+export class PeraWallet implements WalletImplementation {
   connector: WalletConnect;
-  permissionCallback?: PopupPermissionCallback;
-  network: Networks;
 
-  constructor(network: Networks) {
-    this.accounts = [];
-    this.defaultAccountIndex = 0;
+  constructor(network: Networks, walletChoice: Wallets, defaultAccountIdx: number = 0) {
+    this.walletChoice = walletChoice;
     this.network = network;
+    this.defaultAccountIndex = defaultAccountIdx;
     const bridge = "https://bridge.walletconnect.org";
     this.connector = new WalletConnect({
       bridge,
       qrcodeModal: WalletConnectQRCodeModal,
     });
+  }
+  network: Networks;
+  walletChoice: Wallets;
+  accounts: string[];
+  defaultAccountIndex: number;
+
+  displayName(): string {
+    return this.walletChoice;
+  }
+  getSelectedAccountAddress(): string {
+    return this.accounts[this.defaultAccountIndex];
+  }
+
+  getSigner(): TransactionSigner {
+    return (txnGroup: Transaction[], _indexesToSign?: number[]) => {
+      return Promise.resolve(this.signTxn(txnGroup)).then((txns) => {
+        return txns.map((tx) => {
+          return tx.blob;
+        });
+      });
+    };
   }
 
   async connect(): Promise<boolean> {
@@ -66,13 +83,6 @@ class PeraWallet implements IWallet {
     });
   }
 
-  static displayName(): string {
-    return "Wallet Connect";
-  }
-  displayName(): string {
-    return PeraWallet.displayName();
-  }
-
   static img(_inverted: boolean): string {
     return logo;
   }
@@ -88,14 +98,11 @@ class PeraWallet implements IWallet {
     this.connector.killSession();
   }
 
-  getDefaultAccountAddress(): string {
-    if (!this.isConnected()) return "";
-    return this.accounts[this.defaultAccountIndex];
-  }
+
 
   async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
     console.log("signing from pera");
-    const defaultAddress = this.getDefaultAccountAddress();
+    const defaultAddress = this.getSelectedAccountAddress();
     const txnsToSign = txns.map((txn) => {
       const encodedTxn = Buffer.from(
         algosdk.encodeUnsignedTransaction(txn)

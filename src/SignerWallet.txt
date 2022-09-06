@@ -1,0 +1,53 @@
+import { IWallet, Networks, Wallets } from "../_types";
+
+
+
+
+export class SignerWallet implements IWallet {
+    private _network: Networks;
+    private _walletChoice: Wallets;
+    accounts: string[];
+    defaultAccountIndex: number;
+
+    constructor(
+        network: Networks,
+        walletChoice: Wallets,
+    ) {
+        if (
+            (walletChoice == Wallets.ALGOSIGNER || walletChoice == Wallets.MYALGO || walletChoice == Wallets.PERA)
+            && isValidNetwork(network)
+        ) {
+            console.log(walletChoice + "is implemented");
+            this._walletChoice = walletChoice;
+            this._network = network;
+            this.defaultAccountIndex = 0;
+        }
+    }
+
+    displayName(): string {
+        return this.walletChoice;
+    }
+
+    getSelectedAccountAddress(): string {
+        return this.accounts[this.defaultAccountIndex];
+    }
+
+
+    public get walletChoice(): Wallets {
+        return this._walletChoice;
+    }
+
+    public set walletChoice(newChoice: Wallets) {
+        this._walletChoice = newChoice;
+    }
+
+    public set network(newChoice: Networks) {
+        this._network = newChoice;
+    }
+
+    public get network(): Networks {
+        return this._network;
+    }
+
+};
+
