@@ -78,16 +78,12 @@ export class DynamicWallet {
     }
 
     connected(): boolean {
-        return this.wallet !== undefined && this.wallet.isConnected();
+        if (!this.wallet && !this.wallet.isConnected()) return false;
+        else return true;
     }
 
     getSigner(): TransactionSigner {
-        return (txnGroup: Transaction[], indexesToSign?: number[]) => {
-            //   if (indexesToSign) {
-            //       txnGroup = txnGroup.filter(
-            //           (_txn, index) => !indexesToSign.includes(index));
-            //   }
-            console.log("asdfasdfasdf" + indexesToSign);
+        return (txnGroup: Transaction[], _indexesToSign?: number[]) => {
             return Promise.resolve(this.signTxn(txnGroup)).then((txns) => {
                 return txns.map((tx) => {
                     return tx.blob;
@@ -138,12 +134,6 @@ export class DynamicWallet {
         return wp === null ? Networks.TESTNET : wp;
     }
 
-    // flushStorage() {
-    //     console.log("flushing storage");
-    //     localStorage.setItem(StorageKeys.ACCOUNT_LIST, "");
-    //     localStorage.setItem(StorageKeys.ACCOUNT_PREFERENCE, "");
-    //     localStorage.setItem(StorageKeys.WALLET_PREFERENCE, "");
-    // }
 
     disconnect() {
         if (this.wallet !== undefined && this.wallet.isConnected()) {

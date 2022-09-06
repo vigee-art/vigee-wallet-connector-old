@@ -31,7 +31,6 @@ class AlgoSignerWallet implements IWallet {
     }
 
     async connect(): Promise<boolean> {
-
         if (this.isConnected()) return true;
 
         const loaded = await this.waitForLoaded();
@@ -59,67 +58,58 @@ class AlgoSignerWallet implements IWallet {
             await new Promise(r => { setTimeout(r, 1000); });
         }
 
-        return false;
+        //     return false;
+        // }
+
+
+        // Only checking accounts, not that algosigner is loaded because sometimes it takes a few tries
+        isConnected(): boolean { return this.accounts && this.accounts.length > 0 || typeof AlgoSigner !== undefined; }
+
+        disconnect() {
+            console.log("disconnecting AS");
+        }
+
+        getDefaultAccountAddress(): string {
+            if (!this.isConnected()) return "";
+            return this.accounts[this.defaultAccountIndex];
+        }
+
+    async signTxn(txns: Transaction[]): Promise < SignedTxn[] > {
+            console.log("signing form algosigner");
+            await this.connect();
+            const defaultAcct = this.getDefaultAccountAddress();
+            const encodedTxns = txns.map((tx: Transaction) => {
+                const t = { txn: AlgoSigner.encoding.msgpackToBase64(tx.toByte()) };
+                var expextedAddr = algosdk.encodeAddress(tx.from.publicKey);
+                console.log("expected Signer Addr: " + expextedAddr);
+                console.log("To sign transaction: " + t);
+                // @ts-ignore
+                if (expextedAddr !== defaultAcct) { t.signers = []; };
+                return t;
+            });
+            const signed = await AlgoSigner.signTxn(encodedTxns);
+            return signed.map((signedTx: any) => {
+                if (signedTx) return {
+                    txID: signedTx.txID,
+                    blob: AlgoSigner.encoding.base64ToMsgpack(signedTx.blob),
+                };
+                return {};
+            });
+        }
+
+    async sign(txn: TransactionParams): Promise < SignedTxn > {
+            const stxn = await AlgoSigner.sign(txn);
+            const blob = new Uint8Array(Buffer.from(stxn.blob, 'base64'));
+            return { txID: stxn.txID, blob: blob };
+        }
+
+    async signBytes(b: Uint8Array): Promise < Uint8Array > {
+            throw new Error('Method not implemented to sign bytes: ' + Buffer.from(b).toString());
+        }
+
+    async signTeal(teal: Uint8Array): Promise < Uint8Array > {
+            throw new Error('Method not implemented to decode: .' + Buffer.from(teal).toString());
+        };
     }
-
-
-    // Only checking accounts, not that algosigner is loaded because sometimes it takes a few tries
-    isConnected(): boolean { return this.accounts && this.accounts.length > 0; }
-
-    disconnect() {
-        console.log("disconnecting AS");
-    }
-
-    getDefaultAccountAddress(): string {
-        if (!this.isConnected()) return "";
-        return this.accounts[this.defaultAccountIndex];
-    }
-
-    async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
-        console.log("signing form algosigner");
-        const defaultAcct = this.getDefaultAccountAddress();
-        debugger;
-        console.log(defaultAcct);
-        console.log(txns);
-
-        const encodedTxns = txns.map((tx: Transaction) => {
-            const t = { txn: AlgoSigner.encoding.msgpackToBase64(tx.toByte()) };
-            var expextedAddr = algosdk.encodeAddress(tx.from.publicKey);
-            console.log("expected Signer Addr: " + expextedAddr);
-            console.log("To sign transaction: " + t);
-            // @ts-ignore
-            if (expextedAddr !== defaultAcct) { t.signers = []; };
-            return t;
-        });
-        console.log(encodedTxns);
-
-        debugger;
-
-        const signed = await AlgoSigner.signTxn(encodedTxns);
-        console.log(signed);
-        debugger;
-        return signed.map((signedTx: any) => {
-            if (signedTx) return {
-                txID: signedTx.txID,
-                blob: AlgoSigner.encoding.base64ToMsgpack(signedTx.blob),
-            };
-            return {};
-        });
-    }
-
-    async sign(txn: TransactionParams): Promise<SignedTxn> {
-        const stxn = await AlgoSigner.sign(txn);
-        const blob = new Uint8Array(Buffer.from(stxn.blob, 'base64'));
-        return { txID: stxn.txID, blob: blob };
-    }
-
-    async signBytes(b: Uint8Array): Promise<Uint8Array> {
-        throw new Error('Method not implemented to sign bytes: ' + Buffer.from(b).toString());
-    }
-
-    async signTeal(teal: Uint8Array): Promise<Uint8Array> {
-        throw new Error('Method not implemented to decode: .' + Buffer.from(teal).toString());
-    }
-}
 
 export default AlgoSignerWallet;
