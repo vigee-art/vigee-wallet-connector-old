@@ -1,19 +1,31 @@
-import algosdk, { Transaction, TransactionParams, TransactionSigner } from "algosdk";
+import algosdk, {
+  Transaction,
+  TransactionParams,
+  TransactionSigner,
+} from "algosdk";
 
 import WalletConnect from "@walletconnect/client";
 import WalletConnectQRCodeModal from "algorand-walletconnect-qrcode-modal";
 
 import { formatJsonRpcRequest } from "@json-rpc-tools/utils";
-import { Networks, SignedTxn, WalletImplementation, Wallets } from "../../_types";
+import {
+  Networks,
+  SignedTxn,
+  WalletImplementation,
+  Wallets,
+} from "../../_types";
 
 const logo =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDIwSDE3LjUwNDdMMTUuODY5MyAxMy45NkwxMi4zNjI1IDIwSDkuNTYzNzVMMTQuOTc1OCAxMC42NDU2TDE0LjA5OTEgNy4zODE3TDYuNzk4NzQgMjBINEwxMy4yNTYxIDRIMTUuNzE3NkwxNi43Nzk4IDcuOTg3MzhIMTkuMzA4N0wxNy41ODkgMTAuOTgyMUwyMCAyMFoiIGZpbGw9IiMyQjJCMkYiLz4KPC9zdmc+Cg==";
 
-
 export class PeraWallet implements WalletImplementation {
   connector: WalletConnect;
 
-  constructor(network: Networks, walletChoice: Wallets, defaultAccountIdx: number = 0) {
+  constructor(
+    network: Networks,
+    walletChoice: Wallets,
+    defaultAccountIdx: number = 0
+  ) {
     this.walletChoice = walletChoice;
     this.network = network;
     this.defaultAccountIndex = defaultAccountIdx;
@@ -32,6 +44,9 @@ export class PeraWallet implements WalletImplementation {
     return this.walletChoice;
   }
   getSelectedAccountAddress(): string {
+    if (this.accounts.length < 1) {
+      throw new Error("no accounts found");
+    }
     return this.accounts[this.defaultAccountIndex];
   }
 
@@ -71,7 +86,7 @@ export class PeraWallet implements WalletImplementation {
       if (error) throw error;
     });
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const reconn = setInterval(() => {
         if (this.connector.connected) {
           clearInterval(reconn);
@@ -98,8 +113,6 @@ export class PeraWallet implements WalletImplementation {
     this.connector.killSession();
   }
 
-
-
   async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
     console.log("signing from pera");
     const defaultAddress = this.getSelectedAccountAddress();
@@ -120,13 +133,13 @@ export class PeraWallet implements WalletImplementation {
     return result.map((element, idx) => {
       return element
         ? {
-          txID: txns[idx].txID(),
-          blob: new Uint8Array(Buffer.from(element, "base64")),
-        }
+            txID: txns[idx].txID(),
+            blob: new Uint8Array(Buffer.from(element, "base64")),
+          }
         : {
-          txID: txns[idx].txID(),
-          blob: new Uint8Array(),
-        };
+            txID: txns[idx].txID(),
+            blob: new Uint8Array(),
+          };
     });
   }
 
