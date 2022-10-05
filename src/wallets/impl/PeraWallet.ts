@@ -13,6 +13,7 @@ import {
   SignedTxn,
   WalletImplementation,
   Wallets,
+  WalletTransaction,
 } from "../../_types";
 
 const logo =
@@ -44,9 +45,6 @@ export class PeraWallet implements WalletImplementation {
     return this.walletChoice;
   }
   getSelectedAccountAddress(): string {
-    if (this.accounts.length < 1) {
-      throw new Error("no accounts found");
-    }
     return this.accounts[this.defaultAccountIndex];
   }
 
@@ -116,7 +114,7 @@ export class PeraWallet implements WalletImplementation {
   async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
     console.log("signing from pera");
     const defaultAddress = this.getSelectedAccountAddress();
-    const txnsToSign = txns.map((txn) => {
+    const txnsToSign: Array<WalletTransaction> = txns.map((txn) => {
       const encodedTxn = Buffer.from(
         algosdk.encodeUnsignedTransaction(txn)
       ).toString("base64");

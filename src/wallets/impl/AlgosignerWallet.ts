@@ -2,13 +2,13 @@ import algosdk, {
   Transaction,
   TransactionParams,
   TransactionSigner,
-  TransactionWithSigner,
 } from "algosdk";
 import {
   Networks,
   SignedTxn,
   WalletImplementation,
   Wallets,
+  WalletTransaction,
 } from "../../_types";
 
 const logoInverted =
@@ -34,7 +34,7 @@ export class AlgoSignerWallet implements WalletImplementation {
   defaultAccountIndex: number;
 
   getSelectedAccountAddress(): string {
-    if (this.accounts.length < 1) {
+    if (this.isConnected()) {
       throw new Error("no accounts found");
     }
     return this.accounts[this.defaultAccountIndex];
@@ -103,23 +103,22 @@ export class AlgoSignerWallet implements WalletImplementation {
     console.log("disconnecting AS");
   }
 
-  async signTxn(txns: TransactionWithSigner[]): Promise<SignedTxn[]> {
+  async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
     console.log("signing form algosigner");
     await this.connect();
     const defaultAcct = this.getSelectedAccountAddress();
-    const encodedTxns = txns.map(
-      ({ txn, signer }: { txn: Transaction; signer: TransactionSigner }) => {
-        const t = { txn: AlgoSigner.encoding.msgpackToBase64(txn.toByte()) };
-        var expextedAddr = algosdk.encodeAddress(txn.from.publicKey);
-        console.log("expected Signer Addr: " + expextedAddr);
-        console.log("To sign transaction: " + t);
-        if (expextedAddr !== defaultAcct) {
-          // @ts-ignore
-          t.signers = [];
-        }
-        return t;
+    const encodedTxns = txns.map((tx: Transaction) => {
+      const t: WalletTransaction = {
+        txn: AlgoSigner.encoding.msgpackToBase64(tx.toByte()),
+      };
+      var expextedAddr = algosdk.encodeAddress(tx.from.publicKey);
+      console.log("expected Signer Addr: " + expextedAddr);
+      console.log("To sign transaction: " + t);
+      if (expextedAddr !== defaultAcct) {
+        t.signers = [];
       }
-    );
+      return t;
+    });
     const signed = await AlgoSigner.signTxn(encodedTxns);
     return signed.map((signedTx: any) => {
       if (signedTx)
