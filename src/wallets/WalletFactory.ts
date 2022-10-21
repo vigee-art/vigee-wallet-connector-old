@@ -2,7 +2,7 @@ import {
   Networks,
   WalletConstructor,
   WalletImplementation,
-  Wallets
+  Wallets,
 } from "../_types";
 
 import { AlgoSignerWallet, MyAlgoWallet, PeraWallet } from "./impl";
@@ -18,21 +18,31 @@ function isValidNetwork(network: string | Networks): network is Networks {
 export class WalletFactory {
   constructor() {}
 
-  static create(network: Networks, wallet: Wallets, defaultAccountIdx?: number, permissionCallback?: any): WalletImplementation {
+  static create(
+    network: Networks,
+    wallet: Wallets,
+    defaultAccountIdx?: number,
+    permissionCallback?: any
+  ): WalletImplementation {
     if (
-      (wallet == Wallets.ALGOSIGNER || wallet == Wallets.MYALGO || wallet == Wallets.PERA)
-      && isValidNetwork(network)
+      (wallet == Wallets.ALGOSIGNER ||
+        wallet == Wallets.MYALGO ||
+        wallet == Wallets.PERA) &&
+      isValidNetwork(network)
     ) {
-
       const walletMap: WalletMap = {
         MYALGO: MyAlgoWallet,
         ALGOSIGNER: AlgoSignerWallet,
         PERA: PeraWallet,
       };
       console.log("Creating wallet..", permissionCallback);
-      const createdWallet: WalletImplementation = new walletMap[wallet](network, wallet, defaultAccountIdx, permissionCallback);
+      const createdWallet: WalletImplementation = new walletMap[wallet](
+        network,
+        wallet,
+        defaultAccountIdx,
+        permissionCallback
+      );
       return createdWallet;
-    }
-    else throw new Error("");
+    } else throw new Error("");
   }
 }

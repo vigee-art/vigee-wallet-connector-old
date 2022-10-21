@@ -40,20 +40,22 @@ export type WalletConstructor<T extends IWallet> = new (
 export interface IWallet {
   network: Networks;
   walletChoice: Wallets;
-  accounts: string[];
+  _accounts: string[];
   defaultAccountIndex: number;
   displayName(): string;
   getSelectedAccountAddress(): string;
 }
 export interface WalletImplementation extends IWallet {
   img(inverted: boolean): string;
-  connect(settings?: any): Promise<boolean>;
+  connect(disconnectCallback?: Function): Promise<boolean>;
   disconnect(): void;
   isConnected(): boolean;
-  signTxn(txns: Transaction[]): Promise<SignedTxn[]>;
+  reconnect(): Promise<Array<string>>;
+  signTxn(txns: Transaction[]): Promise<SignedTxn[] | Uint8Array[]>;
   signBytes(b: Uint8Array): Promise<Uint8Array>;
   signTeal(teal: Uint8Array): Promise<Uint8Array>;
   getSigner(): TransactionSigner;
+  getAccounts(): string[];
 }
 
 // Meant for wallets that require a popup (MyAlgo Connect)

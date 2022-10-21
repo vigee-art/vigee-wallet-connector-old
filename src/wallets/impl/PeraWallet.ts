@@ -4,23 +4,20 @@ import algosdk, {
   TransactionSigner,
 } from "algosdk";
 
-import WalletConnect from "@walletconnect/client";
-import WalletConnectQRCodeModal from "algorand-walletconnect-qrcode-modal";
-
-import { formatJsonRpcRequest } from "@json-rpc-tools/utils";
 import {
   Networks,
   SignedTxn,
   WalletImplementation,
   Wallets,
-  WalletTransaction,
 } from "../../_types";
+import { PeraWalletConnect } from "@perawallet/connect";
+import { SignerTransaction } from "@perawallet/connect/dist/util/model/peraWalletModels";
 
 const logo =
   "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDIwSDE3LjUwNDdMMTUuODY5MyAxMy45NkwxMi4zNjI1IDIwSDkuNTYzNzVMMTQuOTc1OCAxMC42NDU2TDE0LjA5OTEgNy4zODE3TDYuNzk4NzQgMjBINEwxMy4yNTYxIDRIMTUuNzE3NkwxNi43Nzk4IDcuOTg3MzhIMTkuMzA4N0wxNy41ODkgMTAuOTgyMUwyMCAyMFoiIGZpbGw9IiMyQjJCMkYiLz4KPC9zdmc+Cg==";
 
 export class PeraWallet implements WalletImplementation {
-  connector: WalletConnect;
+  _peraWallet: PeraWalletConnect;
 
   constructor(
     network: Networks,
@@ -30,70 +27,60 @@ export class PeraWallet implements WalletImplementation {
     this.walletChoice = walletChoice;
     this.network = network;
     this.defaultAccountIndex = defaultAccountIdx;
-    const bridge = "https://bridge.walletconnect.org";
-    this.connector = new WalletConnect({
-      bridge,
-      qrcodeModal: WalletConnectQRCodeModal,
-    });
+    this._peraWallet = new PeraWalletConnect();
   }
+
   network: Networks;
   walletChoice: Wallets;
-  accounts: string[];
+  _accounts: string[];
   defaultAccountIndex: number;
 
   displayName(): string {
     return this.walletChoice;
   }
+
+  getAccounts() {
+    return this._peraWallet.connector?.accounts;
+  }
+
   getSelectedAccountAddress(): string {
-    return this.accounts[this.defaultAccountIndex];
+    return this.getAccounts()[this.defaultAccountIndex];
   }
 
   getSigner(): TransactionSigner {
     return (txnGroup: Transaction[], _indexesToSign?: number[]) => {
       return Promise.resolve(this.signTxn(txnGroup)).then((txns) => {
         return txns.map((tx) => {
-          return tx.blob;
+          return tx;
         });
       });
     };
   }
 
-  async connect(): Promise<boolean> {
+  async reconnect(): Promise<string[]> {
+    return await this._peraWallet.reconnectSession();
+  }
+
+  async connect(dcHandler?: Function): Promise<boolean> {
     // Check if connection is already established
-    if (this.connector.connected) return true;
-    await this.connector.createSession();
+    if (this._peraWallet.connector?.connected) {
+      return true;
+    }
+    return this._peraWallet
+      .connect()
+      .then((accounts) => {
+        this._accounts = accounts;
+        this._peraWallet.connector?.on("disconnect", (error, _payload) => {
+          if (error) throw error;
+          this._peraWallet.disconnect().then(() => dcHandler);
+        });
 
-    this.connector.on("connect", (error, payload) => {
-      if (error) {
-        console.log(error);
-        throw error;
-      }
-      const { accounts } = payload.params[0];
-      this.accounts = accounts;
-    });
-
-    this.connector.on("session_update", (error, payload) => {
-      if (error) {
-        throw error;
-      }
-      const { accounts } = payload.params[0];
-      this.accounts = accounts;
-    });
-
-    this.connector.on("disconnect", (error, _payload) => {
-      if (error) throw error;
-    });
-
-    return new Promise((resolve) => {
-      const reconn = setInterval(() => {
-        if (this.connector.connected) {
-          clearInterval(reconn);
-          resolve(true);
-          return;
-        }
-        this.connector.connect();
-      }, 100);
-    });
+        return true;
+      })
+      .catch((e) => {
+        console.log(e);
+        return false;
+      });
   }
 
   static img(_inverted: boolean): string {
@@ -104,41 +91,29 @@ export class PeraWallet implements WalletImplementation {
   }
 
   isConnected(): boolean {
-    return this.connector.connected;
+    return this._peraWallet.connector?.connected;
   }
 
   disconnect() {
-    this.connector.killSession();
+    this._peraWallet
+      .disconnect()
+      .then(() => console.log("sucessfully disconnected from pera wallet"))
+      .catch((error) => console.log(error));
   }
 
-  async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
+  async signTxn(txns: Transaction[]): Promise<Uint8Array[]> {
     console.log("signing from pera");
-    const defaultAddress = this.getSelectedAccountAddress();
-    const txnsToSign: Array<WalletTransaction> = txns.map((txn) => {
-      const encodedTxn = Buffer.from(
-        algosdk.encodeUnsignedTransaction(txn)
-      ).toString("base64");
-
-      if (algosdk.encodeAddress(txn.from.publicKey) !== defaultAddress)
-        return { txn: encodedTxn, signers: [] };
-      return { txn: encodedTxn };
+    const txnsToSign: Array<SignerTransaction> = txns.map((txn) => {
+      if (!this._accounts.includes(algosdk.encodeAddress(txn.from.publicKey))) {
+        console.log("not the signer");
+        return { txn: txn, signers: [] };
+      }
+      return { txn: txn };
     });
 
-    const request = formatJsonRpcRequest("algo_signTxn", [txnsToSign]);
+    const result = await this._peraWallet.signTransaction([txnsToSign]);
 
-    const result: string[] = await this.connector.sendCustomRequest(request);
-
-    return result.map((element, idx) => {
-      return element
-        ? {
-            txID: txns[idx].txID(),
-            blob: new Uint8Array(Buffer.from(element, "base64")),
-          }
-        : {
-            txID: txns[idx].txID(),
-            blob: new Uint8Array(),
-          };
-    });
+    return result;
   }
 
   async sign(txn: TransactionParams): Promise<SignedTxn> {

@@ -26,18 +26,22 @@ export class AlgoSignerWallet implements WalletImplementation {
     this.walletChoice = walletChoice;
     this.network = network;
     this.defaultAccountIndex = defaultAccountIdx;
-    this.accounts = [];
+    this._accounts = [];
+  }
+  async reconnect(): Promise<string[]> {
+    if (await this.connect()) {
+      return this._accounts;
+    } else {
+      throw new Error("couldnt reconnect algosigner");
+    }
   }
   network: Networks;
   walletChoice: Wallets;
-  accounts: string[];
+  _accounts: string[];
   defaultAccountIndex: number;
 
   getSelectedAccountAddress(): string {
-    if (this.isConnected()) {
-      throw new Error("no accounts found");
-    }
-    return this.accounts[this.defaultAccountIndex];
+    return this._accounts[this.defaultAccountIndex];
   }
 
   displayName(): string {
@@ -54,8 +58,12 @@ export class AlgoSignerWallet implements WalletImplementation {
     };
   }
 
+  getAccounts() {
+    return this._accounts;
+  }
+
   isConnected(): boolean {
-    return this.accounts && this.accounts.length > 0;
+    return this._accounts && this._accounts.length > 0;
   }
 
   img(inverted: boolean): string {
@@ -79,7 +87,7 @@ export class AlgoSignerWallet implements WalletImplementation {
     }
 
     const accts = await AlgoSigner.accounts({ ledger: this.network });
-    this.accounts = accts.map((a: any) => {
+    this._accounts = accts.map((a: any) => {
       return a.address;
     });
 
@@ -106,15 +114,14 @@ export class AlgoSignerWallet implements WalletImplementation {
   async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
     console.log("signing form algosigner");
     await this.connect();
-    const defaultAcct = this.getSelectedAccountAddress();
     const encodedTxns = txns.map((tx: Transaction) => {
       const t: WalletTransaction = {
         txn: AlgoSigner.encoding.msgpackToBase64(tx.toByte()),
       };
-      var expextedAddr = algosdk.encodeAddress(tx.from.publicKey);
-      console.log("expected Signer Addr: " + expextedAddr);
+      var expectedAddr = algosdk.encodeAddress(tx.from.publicKey);
+      console.log("expected Signer Addr: " + expectedAddr);
       console.log("To sign transaction: " + t);
-      if (expextedAddr !== defaultAcct) {
+      if (!this._accounts.includes(expectedAddr)) {
         t.signers = [];
       }
       return t;
